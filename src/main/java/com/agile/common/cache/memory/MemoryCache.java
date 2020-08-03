@@ -111,7 +111,7 @@ public class MemoryCache implements AgileCache {
         if (containKey(mapKey)) {
             Node node = store.get(mapKey);
             Object v = node.getValue();
-            if (v == null || !v.getClass().isAssignableFrom(Map.class)) {
+            if (v == null || !Map.class.isAssignableFrom(v.getClass())) {
                 throw new RuntimeException("目标缓存并不是Map结构，无法存放缓存");
             }
             ((Map<Object, Object>) v).put(key, value);
@@ -128,7 +128,7 @@ public class MemoryCache implements AgileCache {
         if (containKey(mapKey)) {
             Node node = store.get(mapKey);
             Object v = node.getValue();
-            if (v == null || !v.getClass().isAssignableFrom(Map.class)) {
+            if (v == null || !Map.class.isAssignableFrom(v.getClass())) {
                 throw new RuntimeException("目标缓存并不是Map结构，无法获取缓存");
             }
             return ((Map<Object, Object>) v).get(key);
@@ -147,7 +147,7 @@ public class MemoryCache implements AgileCache {
         if (containKey(mapKey)) {
             Node node = store.get(mapKey);
             Object v = node.getValue();
-            if (v == null || !v.getClass().isAssignableFrom(Map.class)) {
+            if (v == null || !Map.class.isAssignableFrom(v.getClass())) {
                 throw new RuntimeException("目标缓存并不是Map结构，无法获取缓存");
             }
             ((Map<Object, Object>) v).remove(key);
@@ -159,7 +159,7 @@ public class MemoryCache implements AgileCache {
         if (containKey(listKey)) {
             Node node = store.get(listKey);
             Object v = node.getValue();
-            if (v == null || !v.getClass().isAssignableFrom(List.class)) {
+            if (v == null || !List.class.isAssignableFrom(v.getClass())) {
                 throw new RuntimeException("目标缓存并不是List结构，无法存放缓存");
             }
             ((List<Object>) v).add(value);
@@ -176,7 +176,7 @@ public class MemoryCache implements AgileCache {
         if (containKey(listKey)) {
             Node node = store.get(listKey);
             Object v = node.getValue();
-            if (v == null || !v.getClass().isAssignableFrom(List.class)) {
+            if (v == null || !List.class.isAssignableFrom(v.getClass())) {
                 throw new RuntimeException("目标缓存并不是Map结构，无法获取缓存");
             }
             return ((List<Object>) v).get(index);
@@ -195,8 +195,8 @@ public class MemoryCache implements AgileCache {
         if (containKey(listKey)) {
             Node node = store.get(listKey);
             Object v = node.getValue();
-            if (v == null || !v.getClass().isAssignableFrom(List.class)) {
-                throw new RuntimeException("目标缓存并不是Map结构，无法获取缓存");
+            if (v == null || !List.class.isAssignableFrom(v.getClass())) {
+                throw new RuntimeException("目标缓存并不是List结构，无法获取缓存");
             }
             ((List<Object>) v).remove(index);
         }
@@ -207,10 +207,10 @@ public class MemoryCache implements AgileCache {
         if (containKey(setKey)) {
             Node node = store.get(setKey);
             Object v = node.getValue();
-            if (v == null || !v.getClass().isAssignableFrom(Set.class)) {
+            if (v == null || !Set.class.isAssignableFrom(v.getClass())) {
                 throw new RuntimeException("目标缓存并不是Set结构，无法存放缓存");
             }
-            ((List<Object>) v).add(value);
+            ((Set<Object>) v).add(value);
         } else {
             Set<Object> set = new HashSet<>(16);
             set.add(value);
@@ -224,10 +224,10 @@ public class MemoryCache implements AgileCache {
         if (containKey(setKey)) {
             Node node = store.get(setKey);
             Object v = node.getValue();
-            if (v == null || !v.getClass().isAssignableFrom(List.class)) {
+            if (v == null || !Set.class.isAssignableFrom(v.getClass())) {
                 throw new RuntimeException("目标缓存并不是Set结构，无法获取缓存");
             }
-            ((List<Object>) v).remove(node);
+            ((Set<Object>) v).remove(node);
         }
     }
 
