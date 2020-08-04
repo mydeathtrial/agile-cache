@@ -1,7 +1,7 @@
 # agile-cache ： 缓存组件
 [![](https://img.shields.io/badge/Spring-LATEST-green)](https://img.shields.io/badge/spring-LATEST-green)
 [![](https://img.shields.io/badge/build-maven-green)](https://img.shields.io/badge/build-maven-green)
-##它有什么作用
+## 它有什么作用
 
 * **缓存切换**
 切换方式与spring boot cache切换方式一致，均使用元数据spring.cache.type进行配置，当不存在该配置情况下，默认使用内存介质
@@ -26,7 +26,7 @@ CacheUtil、AgileCache针对不同存储介质提供一致性的集合数据操�
 实现方式非常简单
 
 -------
-##快速入门
+## 快速入门
 开始你的第一个项目是非常容易的。
 
 #### 步骤 1: 下载包（后续发行maven中央仓库）
@@ -208,7 +208,7 @@ public class YourClass {
 }
 ```
 
-##EhCache缓存配置
+## EhCache缓存配置
 解析器中涵盖的EhCache解析器提供yml或properties形式配置，配置项与EhCache官方标准名一致，以默认公共缓存域common-cache为例：
 ```properties
 spring.ehcache.default-config-name=common-cache
@@ -223,7 +223,7 @@ spring.ehcache.regions.common-cache.memory-store-eviction-policy=LRU
 spring.ehcache.regions.common-cache.disk-expiry-thread-interval-seconds=120
 ```
 
-##Redis缓存配置
+## Redis缓存配置
 使用spring-data-redis原生配置即可，例：
 ```properties
 spring.redis.host=localhost
@@ -239,7 +239,7 @@ spring.redis.database=0
 spring.redis.timeout=60s
 ```
 
-##Hibernate二级缓存
+## Hibernate二级缓存
 缓存解析器默认提供EhCache与Redis作为Hibernate二级缓存介质，缓存域工厂类如下：
 
 * **EhCache**
