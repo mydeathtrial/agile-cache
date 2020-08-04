@@ -1,5 +1,6 @@
 # agile-cache ： 缓存组件
-
+[![](https://img.shields.io/badge/Spring-LATEST-green)](https://img.shields.io/badge/spring-LATEST-green)
+[![](https://img.shields.io/badge/build-maven-green)](https://img.shields.io/badge/build-maven-green)
 ##它有什么作用
 
 * **缓存切换**
