@@ -5,7 +5,6 @@ import com.agile.common.cache.AgileCacheManagerInterface;
 import org.springframework.cache.Cache;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.time.Duration;
 
 /**

@@ -116,6 +116,7 @@ public interface AgileCache extends Cache {
      * @return 值
      */
     <T> T getFromMap(Object mapKey, Object key, Class<T> clazz);
+
     /**
      * 从Map中删除索引key
      *

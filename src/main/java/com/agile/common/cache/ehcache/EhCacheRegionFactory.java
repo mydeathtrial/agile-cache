@@ -1,12 +1,12 @@
 package com.agile.common.cache.ehcache;
 
-import com.agile.common.config.EhCacheAutoConfiguration;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.ehcache.internal.SingletonEhcacheRegionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;

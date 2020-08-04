@@ -36,8 +36,8 @@ public class AgileEhCache extends AbstractAgileCache {
     public void put(Object key, Object value, Duration timeout) {
         Ehcache ehCache = getEhCache();
         Element element = new Element(key, value);
-        element.setTimeToLive(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()),Integer.class));
-        element.setTimeToIdle(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()),Integer.class));
+        element.setTimeToLive(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()), Integer.class));
+        element.setTimeToIdle(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()), Integer.class));
         element.setEternal(true);
         ehCache.put(element);
     }

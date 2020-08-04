@@ -1,4 +1,4 @@
-package com.agile.common.config;
+package com.autoconfig;
 
 import com.agile.common.properties.EhCacheProperties;
 import net.sf.ehcache.Cache;
