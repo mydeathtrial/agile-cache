@@ -36,9 +36,9 @@ CacheUtil、AgileCache针对不同存储介质提供一致性的集合数据操�
 #### 步骤 2: 添加maven依赖
 ```xml
         <dependency>
-            <groupId>com.agileframework</groupId>
+            <groupId>cloud.agileframework</groupId>
             <artifactId>agile-cache</artifactId>
-            <version>LATEST</version>
+            <version>0.1.0</version>
         </dependency>
 ```
 #### 步骤 3: 程序中调用CacheUtil（例）
@@ -243,9 +243,9 @@ spring.redis.timeout=60s
 缓存解析器默认提供EhCache与Redis作为Hibernate二级缓存介质，缓存域工厂类如下：
 
 * **EhCache**
-    com.agile.common.cache.ehcache.EhCacheRegionFactory
+    cloud.agileframework.cache.support.ehcache.EhCacheRegionFactory
 * **Redis**
-    com.agile.common.cache.redis.RedisRegionFactory
+    cloud.agileframework.cache.support.redis.RedisRegionFactory
 
 spring-data-jpa中配置如下：   
 ```yaml
@@ -270,5 +270,5 @@ spring:
           hbm2ddl:
             auto: update
           region:
-            factory_class: com.agile.common.cache.redis.RedisRegionFactory
+            factory_class: cloud.agileframework.cache.support.redis.RedisRegionFactory
 ```
