@@ -29,8 +29,9 @@ CacheUtil、AgileCache针对不同存储介质提供一致性的集合数据操�
 ## 快速入门
 开始你的第一个项目是非常容易的。
 
-#### 步骤 1: 下载包（后续发行maven中央仓库）
+#### 步骤 1: 下载包
 您可以从[最新稳定版本]下载包(https://github.com/mydeathtrial/agile-cache/releases).
+该包已上传至maven中央仓库，可在pom中直接声明引用
 
 以版本agile-cache-0.1.0.jar为例。
 #### 步骤 2: 添加maven依赖
