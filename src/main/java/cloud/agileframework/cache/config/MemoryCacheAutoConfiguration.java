@@ -1,9 +1,9 @@
-package com.autoconfig;
+package cloud.agileframework.cache.config;
 
-import com.agile.common.cache.AgileCacheManagerInterface;
-import com.agile.common.cache.memory.MemoryCacheManager;
+import cloud.agileframework.cache.support.AgileCacheManagerInterface;
+import cloud.agileframework.cache.support.memory.MemoryCacheManager;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * @since 1.0
  */
 @Configuration
-@ConditionalOnProperty(name = "type", prefix = "spring.cache", matchIfMissing = true)
+@AutoConfigureAfter({AgileCacheAutoConfiguration.class})
 public class MemoryCacheAutoConfiguration {
 
     @Bean

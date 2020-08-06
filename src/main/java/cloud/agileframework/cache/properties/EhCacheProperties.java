@@ -1,4 +1,4 @@
-package com.agile.common.properties;
+package cloud.agileframework.cache.properties;
 
 import net.sf.ehcache.config.CacheConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -14,11 +14,11 @@ public class EhCacheProperties {
     /**
      * 默认配置
      */
-    private String defaultConfigName;
+    private String defaultConfigName = "common-cache";
     /**
      * 存储地址
      */
-    private String path;
+    private String path = "/ehcache";
 
     /**
      * 缓存区域配置

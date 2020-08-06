@@ -1,4 +1,4 @@
-package com.agile.common.cache.memory;
+package cloud.agileframework.cache.support.memory;
 
 /**
  * @author 佟盟

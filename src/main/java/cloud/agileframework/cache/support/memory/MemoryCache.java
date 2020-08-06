@@ -1,6 +1,6 @@
-package com.agile.common.cache.memory;
+package cloud.agileframework.cache.support.memory;
 
-import com.agile.common.cache.AgileCache;
+import cloud.agileframework.cache.support.AgileCache;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -177,7 +177,7 @@ public class MemoryCache implements AgileCache {
             Node node = store.get(listKey);
             Object v = node.getValue();
             if (v == null || !List.class.isAssignableFrom(v.getClass())) {
-                throw new RuntimeException("目标缓存并不是Map结构，无法获取缓存");
+                throw new RuntimeException("目标缓存并不是List结构，无法获取缓存");
             }
             return ((List<Object>) v).get(index);
         }
@@ -186,7 +186,7 @@ public class MemoryCache implements AgileCache {
 
     @Override
     public <T> T getFromList(Object listKey, int index, Class<T> clazz) {
-        Object v = getFromMap(listKey, index);
+        Object v = getFromList(listKey, index);
         return (T) v;
     }
 

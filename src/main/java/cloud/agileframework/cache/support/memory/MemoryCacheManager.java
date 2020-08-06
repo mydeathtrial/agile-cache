@@ -1,7 +1,7 @@
-package com.agile.common.cache.memory;
+package cloud.agileframework.cache.support.memory;
 
-import com.agile.common.cache.AgileCache;
-import com.agile.common.cache.AgileCacheManager;
+import cloud.agileframework.cache.support.AgileCache;
+import cloud.agileframework.cache.support.AgileCacheManager;
 import org.springframework.cache.Cache;
 
 /**

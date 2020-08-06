@@ -1,6 +1,6 @@
-package com.autoconfig;
+package cloud.agileframework.cache.config;
 
-import com.agile.common.properties.EhCacheProperties;
+import cloud.agileframework.cache.properties.EhCacheProperties;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;

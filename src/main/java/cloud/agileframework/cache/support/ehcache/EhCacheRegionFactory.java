@@ -1,4 +1,4 @@
-package com.agile.common.cache.ehcache;
+package cloud.agileframework.cache.support.ehcache;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;

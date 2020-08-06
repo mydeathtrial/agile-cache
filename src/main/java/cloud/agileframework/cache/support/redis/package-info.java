@@ -6,4 +6,4 @@
  * @version 1.0
  * @since 1.0
  */
-package com.agile.common.cache.redis;
+package cloud.agileframework.cache.support.redis;

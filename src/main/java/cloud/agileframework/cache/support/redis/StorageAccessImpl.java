@@ -1,4 +1,4 @@
-package com.agile.common.cache.redis;
+package cloud.agileframework.cache.support.redis;
 
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.support.DomainDataStorageAccess;

@@ -1,3 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.autoconfig.EhCacheAutoConfiguration,\
-com.autoconfig.MemoryCacheAutoConfiguration
+cloud.agileframework.cache.config.AgileCacheAutoConfiguration,\
+cloud.agileframework.cache.config.EhCacheAutoConfiguration,\
+cloud.agileframework.cache.config.MemoryCacheAutoConfiguration

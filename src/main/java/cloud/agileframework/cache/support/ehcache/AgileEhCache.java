@@ -1,6 +1,6 @@
-package com.agile.common.cache.ehcache;
+package cloud.agileframework.cache.support.ehcache;
 
-import com.agile.common.cache.AbstractAgileCache;
+import cloud.agileframework.cache.support.AbstractAgileCache;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import org.springframework.cache.ehcache.EhCacheCache;

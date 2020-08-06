@@ -1,4 +1,4 @@
-package com.agile.common.cache.redis;
+package cloud.agileframework.cache.support.redis;
 
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;

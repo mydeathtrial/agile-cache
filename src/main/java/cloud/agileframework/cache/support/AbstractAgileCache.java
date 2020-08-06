@@ -1,4 +1,4 @@
-package com.agile.common.cache;
+package cloud.agileframework.cache.support;
 
 import org.springframework.cache.Cache;
 import org.springframework.data.redis.serializer.SerializationException;

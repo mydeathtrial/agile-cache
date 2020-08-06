@@ -1,6 +1,6 @@
-package com.agile.common.cache.redis;
+package cloud.agileframework.cache.support.redis;
 
-import com.agile.common.cache.AbstractAgileCache;
+import cloud.agileframework.cache.support.AbstractAgileCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.support.NullValue;

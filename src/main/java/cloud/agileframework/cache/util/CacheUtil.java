@@ -1,9 +1,8 @@
-package com.agile.common.util;
+package cloud.agileframework.cache.util;
 
-import com.agile.common.cache.AgileCache;
-import com.agile.common.cache.AgileCacheManagerInterface;
+import cloud.agileframework.cache.support.AgileCache;
+import cloud.agileframework.cache.support.AgileCacheManagerInterface;
 import org.springframework.cache.Cache;
-import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
@@ -14,13 +13,12 @@ import java.time.Duration;
  * @version 1.0
  * @since 1.0
  */
-@Component
 public class CacheUtil {
     private static AgileCacheManagerInterface agileCacheManager;
     private static final String DEFAULT_CACHE_NAME = "common-cache";
 
-    public CacheUtil(AgileCacheManagerInterface agileCacheManagerBean) {
-        agileCacheManager = agileCacheManagerBean;
+    public static void setAgileCacheManager(AgileCacheManagerInterface agileCacheManager) {
+        CacheUtil.agileCacheManager = agileCacheManager;
     }
 
     public static AgileCacheManagerInterface getAgileCacheManager() {

@@ -1,15 +1,12 @@
-package com.agile.common.cache.ehcache;
+package cloud.agileframework.cache.support.ehcache;
 
-import com.agile.common.cache.AgileCache;
-import com.agile.common.cache.AgileCacheManager;
+import cloud.agileframework.cache.support.AgileCache;
+import cloud.agileframework.cache.support.AgileCacheManager;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.Cache;
 import org.springframework.cache.ehcache.EhCacheCache;
 import org.springframework.cache.ehcache.EhCacheCacheManager;
-import org.springframework.stereotype.Component;
 
 /**
  * @author 佟盟
@@ -18,13 +15,10 @@ import org.springframework.stereotype.Component;
  * @version 1.0
  * @since 1.0
  */
-@Component
-@ConditionalOnProperty(name = "type", prefix = "spring.cache", havingValue = "ehcache")
 public class AgileEhCacheCacheManager extends AgileCacheManager {
 
     private static EhCacheCacheManager cacheManager;
 
-    @Autowired
     public AgileEhCacheCacheManager(EhCacheCacheManager cacheManager) {
         setCacheManager(cacheManager);
     }
