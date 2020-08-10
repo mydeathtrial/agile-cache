@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * @since 1.0
  */
 @Configuration
-@AutoConfigureAfter({AgileCacheAutoConfiguration.class})
+@AutoConfigureAfter({EhCacheAutoConfiguration.class, RedisAutoConfiguration.class})
 public class MemoryCacheAutoConfiguration {
 
     @Bean

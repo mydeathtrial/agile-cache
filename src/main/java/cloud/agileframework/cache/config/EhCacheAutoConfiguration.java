@@ -1,6 +1,7 @@
 package cloud.agileframework.cache.config;
 
 import cloud.agileframework.cache.properties.EhCacheProperties;
+import cloud.agileframework.cache.support.ehcache.AgileEhCacheCacheManager;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
@@ -28,6 +29,11 @@ public class EhCacheAutoConfiguration {
 
     public EhCacheAutoConfiguration(EhCacheProperties ehCacheProperties) {
         this.ehCacheProperties = ehCacheProperties;
+    }
+
+    @Bean
+    AgileEhCacheCacheManager agileEhCacheCacheManager(EhCacheCacheManager cacheManager) {
+        return new AgileEhCacheCacheManager(cacheManager);
     }
 
     @Bean
