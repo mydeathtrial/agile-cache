@@ -36,11 +36,19 @@ CacheUtil、AgileCache针对不同存储介质提供一致性的集合数据操�
 以版本agile-cache-0.1.0.jar为例。
 #### 步骤 2: 添加maven依赖
 ```xml
-        <dependency>
-            <groupId>cloud.agileframework</groupId>
-            <artifactId>agile-cache</artifactId>
-            <version>0.1.0</version>
-        </dependency>
+<!--声明中央仓库-->
+<repositories>
+    <repository>
+        <id>cent</id>
+        <url>https://repo1.maven.org/maven2/</url>
+    </repository>
+</repositories>
+<!--声明依赖-->
+<dependency>
+    <groupId>cloud.agileframework</groupId>
+    <artifactId>agile-cache</artifactId>
+    <version>2.0.0</version>
+</dependency>
 ```
 #### 步骤 3: 程序中调用CacheUtil（例）
 ```java
