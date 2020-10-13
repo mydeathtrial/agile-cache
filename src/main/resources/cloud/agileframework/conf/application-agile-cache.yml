@@ -1,0 +1,28 @@
+spring:
+  ehcache:
+    default-config-name: common-cache
+    path: /temp
+    regions:
+      common-cache:
+        disk-expiry-thread-interval-seconds: 120
+        disk-spool-buffer-size-m-b: 30
+        eternal: false
+        max-entries-local-disk: 10000000
+        max-entries-local-heap: 10000
+        memory-store-eviction-policy: LRU
+        time-to-idle-seconds: 0
+        time-to-live-seconds: 0
+  redis:
+    database: 0
+    host: localhost
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        max-wait: -1
+        min-idle: 0
+      shutdown-timeout: 100ms
+    password: 123456
+    port: 6379
+    ssl: false
+    timeout: 60s
