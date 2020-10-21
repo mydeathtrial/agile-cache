@@ -1,9 +1,11 @@
 package cloud.agileframework.cache.support.redis;
 
 import cloud.agileframework.cache.support.AbstractAgileCache;
+import com.alibaba.fastjson.support.spring.GenericFastJsonRedisSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.support.NullValue;
+import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.dao.PessimisticLockingFailureException;
@@ -145,12 +147,12 @@ public class AgileRedis extends AbstractAgileCache {
     }
 
     @Override
-    public boolean lock(Object lock) {
+    public synchronized boolean lock(Object lock) {
         return execute(name, connection -> doLock(lock, connection));
     }
 
     @Override
-    public boolean lock(Object lock, Duration timeout) {
+    public synchronized boolean lock(Object lock, Duration timeout) {
         boolean isLock = execute(name, connection -> doLock(lock, connection));
         if (isLock) {
             execute(name, connection -> connection.expire(createAndConvertCacheKey(createCacheLockKey(lock)), timeout.getSeconds()));
@@ -159,12 +161,12 @@ public class AgileRedis extends AbstractAgileCache {
     }
 
     @Override
-    public void unlock(Object lock) {
+    public synchronized void unlock(Object lock) {
         executeLockFree(connection -> doUnlock(lock, connection));
     }
 
     @Override
-    public void unlock(Object lock, Duration timeout) {
+    public synchronized void unlock(Object lock, Duration timeout) {
         execute(name, connection -> connection.expire(createAndConvertCacheKey(createCacheLockKey(lock)), timeout.getSeconds()));
     }
 
@@ -217,7 +219,18 @@ public class AgileRedis extends AbstractAgileCache {
             return BINARY_NULL_VALUE;
         }
 
-        return ByteUtils.getBytes(cacheConfig.getValueSerializationPair().write(value));
+        return trySerializeJsonCacheValue(value);
+    }
+
+    private byte[] trySerializeJsonCacheValue(Object value) {
+        try {
+            //如果可以正反序列化，则使用json
+            byte[] a = fastJsonRedisSerializer.serialize(value);
+            fastJsonRedisSerializer.deserialize(a);
+            return a;
+        } catch (Exception e) {
+            return ByteUtils.getBytes(cacheConfig.getValueSerializationPair().write(value));
+        }
     }
 
     protected Object deserializeCacheValue(byte[] value) {
@@ -226,7 +239,17 @@ public class AgileRedis extends AbstractAgileCache {
             return NullValue.INSTANCE;
         }
 
-        return cacheConfig.getValueSerializationPair().read(ByteBuffer.wrap(value));
+        return tryDeserializeJsonCacheValue(value);
+    }
+
+    private final GenericFastJsonRedisSerializer fastJsonRedisSerializer = new GenericFastJsonRedisSerializer();
+
+    private Object tryDeserializeJsonCacheValue(byte[] value) {
+        try {
+            return cacheConfig.getValueSerializationPair().read(ByteBuffer.wrap(value));
+        } catch (Exception e) {
+            return fastJsonRedisSerializer.deserialize(value);
+        }
     }
 
     protected Object deserializeCacheKey(byte[] value) {
@@ -352,7 +375,8 @@ public class AgileRedis extends AbstractAgileCache {
             byte[][] set = result.toArray(arr);
             execute(name, connection -> connection.sAdd(createAndConvertCacheKey(key), set));
         } else {
-            super.put(key, value);
+            execute(name, connection -> connection.set(createAndConvertCacheKey(key), serializeCacheValue(value)));
+//            super.put(key, value);
         }
     }
 
@@ -371,8 +395,15 @@ public class AgileRedis extends AbstractAgileCache {
             Set<byte[]> set = execute(name, connection -> connection.sMembers(createAndConvertCacheKey(key)));
             return (T) set.stream().map(this::deserializeCacheValue).collect(Collectors.toSet());
         } else {
-            return super.get(key, clazz);
+            byte[] v = execute(name, connection -> connection.get(createAndConvertCacheKey(key)));
+            return (T) deserializeCacheValue(v);
         }
+    }
+
+    @Override
+    public ValueWrapper get(Object key) {
+        byte[] v = execute(name, connection -> connection.get(createAndConvertCacheKey(key)));
+        return new SimpleValueWrapper(deserializeCacheValue(v));
     }
 
     @Override

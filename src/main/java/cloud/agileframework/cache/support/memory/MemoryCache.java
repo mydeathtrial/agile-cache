@@ -1,6 +1,7 @@
 package cloud.agileframework.cache.support.memory;
 
 import cloud.agileframework.cache.support.AgileCache;
+import com.google.common.collect.Maps;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -231,21 +232,39 @@ public class MemoryCache implements AgileCache {
         }
     }
 
+    private static final Map<Object, Long> LOCK_POOL = Maps.newConcurrentMap();
+
     @Override
-    public boolean lock(Object lock) {
+    public synchronized boolean lock(Object lock) {
+        return lock(lock, null);
+    }
+
+    @Override
+    public synchronized boolean lock(Object lock, Duration timeout) {
+        final long currentTime = System.currentTimeMillis();
+        if (LOCK_POOL.containsKey(lock)) {
+            Long timeoutMillion = LOCK_POOL.get(lock);
+            if (timeoutMillion == -1 || currentTime <= timeoutMillion) {
+                return false;
+            }
+        }
+        if (timeout == null) {
+            LOCK_POOL.put(lock, -1L);
+        } else {
+            LOCK_POOL.put(lock, currentTime + timeout.toMillis());
+        }
         return true;
     }
 
     @Override
-    public boolean lock(Object lock, Duration timeout) {
-        return true;
+    public synchronized void unlock(Object lock) {
+        LOCK_POOL.remove(lock);
     }
 
     @Override
-    public void unlock(Object lock) {
+    public synchronized void unlock(Object lock, Duration timeout) {
+        final long currentTime = System.currentTimeMillis();
+        LOCK_POOL.put(lock, currentTime + timeout.toMillis());
     }
 
-    @Override
-    public void unlock(Object lock, Duration timeout) {
-    }
 }

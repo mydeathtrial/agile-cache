@@ -165,24 +165,12 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     @Override
-    public boolean lock(Object lock) {
-        Ehcache ehcache = getEhCache();
-        boolean isLock;
-        try {
-            isLock = ehcache.tryWriteLockOnKey(lock, 0);
-        } catch (InterruptedException e) {
-            isLock = false;
-        }
-        if (isLock) {
-            ehcache.acquireWriteLockOnKey(lock);
-            ehcache.put(new Element(lock, new byte[0]));
-        }
-
-        return isLock;
+    public synchronized boolean lock(Object lock) {
+        return lock(lock, null);
     }
 
     @Override
-    public boolean lock(Object lock, Duration timeout) {
+    public synchronized boolean lock(Object lock, Duration timeout) {
         Ehcache ehcache = getEhCache();
         boolean isLock;
         try {
@@ -192,7 +180,11 @@ public class AgileEhCache extends AbstractAgileCache {
         }
         if (isLock) {
             ehcache.acquireWriteLockOnKey(lock);
-            ehcache.put(new Element(lock, new byte[0], timeout.getSeconds()));
+            if (timeout == null) {
+                ehcache.put(new Element(lock, new byte[0]));
+            } else {
+                ehcache.put(new Element(lock, new byte[0], timeout.getSeconds()));
+            }
         }
 
         return isLock;
@@ -201,11 +193,15 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public void unlock(Object lock) {
         Ehcache ehcache = getEhCache();
-        ehcache.releaseReadLockOnKey(lock);
+        try {
+            ehcache.releaseReadLockOnKey(lock);
+        } catch (IllegalMonitorStateException ignored) {
+        }
     }
 
     @Override
     public void unlock(Object lock, Duration timeout) {
+        unlock(lock);
         Ehcache ehcache = getEhCache();
         ehcache.put(new Element(lock, new byte[0], timeout.getSeconds()));
     }
