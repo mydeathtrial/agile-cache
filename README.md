@@ -47,7 +47,7 @@ CacheUtil、AgileCache针对不同存储介质提供一致性的集合数据操�
 <dependency>
     <groupId>cloud.agileframework</groupId>
     <artifactId>agile-cache</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.6</version>
 </dependency>
 ```
 #### 步骤 3: 程序中调用CacheUtil（例）
