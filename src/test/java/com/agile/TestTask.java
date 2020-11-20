@@ -1,6 +1,7 @@
 package com.agile;
 
 import cloud.agileframework.cache.util.CacheUtil;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -27,6 +28,11 @@ import java.util.Set;
 @SpringBootTest(classes = App.class)
 public class TestTask {
     private final Logger logger = LoggerFactory.getLogger(TestTask.class);
+
+    @Before
+    public void t(){
+        Object a = CacheUtil.getCache("sd");
+    }
 
     @Test
     public void add() {
