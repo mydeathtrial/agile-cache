@@ -10,7 +10,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cache.ehcache.EhCacheCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,27 +20,24 @@ import java.util.Map;
  */
 @Configuration
 @EnableConfigurationProperties(value = {EhCacheProperties.class})
-@ConditionalOnClass({Cache.class, EhCacheCacheManager.class})
+@ConditionalOnClass({CacheManager.class})
 @ConditionalOnMissingBean({org.springframework.cache.CacheManager.class})
 @ConditionalOnProperty(name = "type", prefix = "spring.cache", havingValue = "ehcache")
-public class EhCacheAutoConfiguration {
+public class EhCacheAutoConfiguration extends CacheAutoConfiguration{
     private final EhCacheProperties ehCacheProperties;
 
     public EhCacheAutoConfiguration(EhCacheProperties ehCacheProperties) {
         this.ehCacheProperties = ehCacheProperties;
     }
 
+    @Override
     @Bean
-    AgileEhCacheCacheManager agileEhCacheCacheManager(EhCacheCacheManager cacheManager) {
-        return new AgileEhCacheCacheManager(cacheManager);
+    AgileEhCacheCacheManager agileCacheManager() {
+        return new AgileEhCacheCacheManager(ehCacheCacheManager());
     }
 
     @Bean
-    public EhCacheCacheManager cacheManager(CacheManager ehCacheCacheManager) {
-        return new EhCacheCacheManager(ehCacheCacheManager);
-    }
-
-    @Bean
+    @ConditionalOnMissingBean(CacheManager.class)
     public CacheManager ehCacheCacheManager() {
         return new CacheManager(configuration());
     }

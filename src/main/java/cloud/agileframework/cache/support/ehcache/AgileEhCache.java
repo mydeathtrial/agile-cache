@@ -1,6 +1,7 @@
 package cloud.agileframework.cache.support.ehcache;
 
 import cloud.agileframework.cache.support.AbstractAgileCache;
+import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import org.springframework.cache.ehcache.EhCacheCache;
@@ -51,31 +52,33 @@ public class AgileEhCache extends AbstractAgileCache {
         Element value = getEhCache().get(mapKey);
         if (value == null) {
             if (require) {
-                getEhCache().put(new Element(mapKey, new HashMap<>()));
+                value = new Element(mapKey, new HashMap<>(0));
+                getEhCache().put(value);
             } else {
-                throw new RuntimeException("Cache data does not exist");
+                throw new CacheException("Cache data does not exist");
             }
         }
         Object map = value.getObjectValue();
         if (!Map.class.isAssignableFrom(map.getClass())) {
-            throw new RuntimeException("Target data is not the expected type");
+            throw new CacheException("Target data is not the expected type");
         }
 
-        return (Map) map;
+        return (Map<Object, Object>) map;
     }
 
     private List<Object> getList(Object listKey, boolean require) {
         Element value = getEhCache().get(listKey);
         if (value == null) {
             if (require) {
-                getEhCache().put(new Element(listKey, new ArrayList<>()));
+                value = new Element(listKey, new ArrayList<>());
+                getEhCache().put(value);
             } else {
-                throw new RuntimeException("Cache data does not exist");
+                throw new CacheException("Cache data does not exist");
             }
         }
         Object map = value.getObjectValue();
         if (!List.class.isAssignableFrom(map.getClass())) {
-            throw new RuntimeException("Target data is not the expected type");
+            throw new CacheException("Target data is not the expected type");
         }
         return (List) map;
     }
@@ -84,14 +87,15 @@ public class AgileEhCache extends AbstractAgileCache {
         Element value = getEhCache().get(setKey);
         if (value == null) {
             if (require) {
-                getEhCache().put(new Element(setKey, new HashSet<>()));
+                value = new Element(setKey, new HashSet<>());
+                getEhCache().put(value);
             } else {
-                throw new RuntimeException("Cache data does not exist");
+                throw new CacheException("Cache data does not exist");
             }
         }
         Object map = value.getObjectValue();
         if (!Set.class.isAssignableFrom(map.getClass())) {
-            throw new RuntimeException("Target data is not the expected type");
+            throw new CacheException("Target data is not the expected type");
         }
         return (Set) map;
     }

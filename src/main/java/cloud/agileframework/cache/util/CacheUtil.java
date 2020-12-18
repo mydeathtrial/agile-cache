@@ -2,7 +2,6 @@ package cloud.agileframework.cache.util;
 
 import cloud.agileframework.cache.support.AgileCache;
 import cloud.agileframework.cache.support.AgileCacheManagerInterface;
-import cloud.agileframework.spring.util.BeanUtil;
 import org.springframework.cache.Cache;
 
 import java.time.Duration;
@@ -17,8 +16,14 @@ import java.time.Duration;
 public class CacheUtil {
     private static final String DEFAULT_CACHE_NAME = "common-cache";
 
+    private static AgileCacheManagerInterface agileCacheManagerInterface;
+
+    public static void setAgileCacheManagerInterface(AgileCacheManagerInterface agileCacheManagerInterface) {
+        CacheUtil.agileCacheManagerInterface = agileCacheManagerInterface;
+    }
+
     public static AgileCacheManagerInterface getAgileCacheManager() {
-        return BeanUtil.getBean(AgileCacheManagerInterface.class);
+        return agileCacheManagerInterface;
     }
 
     public static AgileCache getCache() {
@@ -29,17 +34,6 @@ public class CacheUtil {
         return getAgileCacheManager().getCache(cacheName);
     }
 
-    @Deprecated
-    public static void put(Cache cache, Object key, Object value, int timeout) {
-        getCache(cache.getName()).put(key, value, Duration.ofSeconds(timeout));
-    }
-
-    @Deprecated
-    public static void put(AgileCache cache, Object key, Object value, int timeout) {
-        getCache(cache.getName()).put(key, value, Duration.ofSeconds(timeout));
-    }
-
-    @Deprecated
     public static void put(Object key, Object value, int timeout) {
         getCache(DEFAULT_CACHE_NAME).put(key, value, Duration.ofSeconds(timeout));
     }

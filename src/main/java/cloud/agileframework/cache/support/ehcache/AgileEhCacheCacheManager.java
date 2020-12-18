@@ -17,17 +17,17 @@ import org.springframework.cache.ehcache.EhCacheCacheManager;
  */
 public class AgileEhCacheCacheManager extends AgileCacheManager {
 
-    private static EhCacheCacheManager cacheManager;
+    private static CacheManager cacheManager;
 
-    public AgileEhCacheCacheManager(EhCacheCacheManager cacheManager) {
+    public AgileEhCacheCacheManager(CacheManager cacheManager) {
         setCacheManager(cacheManager);
     }
 
-    public static EhCacheCacheManager getCacheManager() {
+    public static CacheManager getCacheManager() {
         return cacheManager;
     }
 
-    public static void setCacheManager(EhCacheCacheManager cacheManager) {
+    public static void setCacheManager(CacheManager cacheManager) {
         AgileEhCacheCacheManager.cacheManager = cacheManager;
     }
 
@@ -38,11 +38,10 @@ public class AgileEhCacheCacheManager extends AgileCacheManager {
 
     @Override
     public AgileCache getMissingCache(String cacheName) {
-        CacheManager ehcacheCacheManager = cacheManager.getCacheManager();
-        assert ehcacheCacheManager != null;
-        Ehcache target = ehcacheCacheManager.getEhcache(cacheName);
+        assert cacheManager != null;
+        Ehcache target = cacheManager.getEhcache(cacheName);
         if (target == null) {
-            target = ehcacheCacheManager.addCacheIfAbsent(cacheName);
+            target = cacheManager.addCacheIfAbsent(cacheName);
         }
         return cover(new EhCacheCache(target));
     }

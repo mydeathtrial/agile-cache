@@ -25,7 +25,7 @@ public class EhCacheRegionFactory extends SingletonEhcacheRegionFactory {
                 logger.info("完成初始化EhCache二级缓存区域");
             }
             REFERENCE_COUNT.incrementAndGet();
-            return Objects.requireNonNull(AgileEhCacheCacheManager.getCacheManager()).getCacheManager();
+            return AgileEhCacheCacheManager.getCacheManager();
         } catch (Exception e) {
             if (logger.isErrorEnabled()) {
                 logger.error("初始化EhCache二级缓存区域失败", e);
@@ -37,7 +37,7 @@ public class EhCacheRegionFactory extends SingletonEhcacheRegionFactory {
 
     @Override
     protected Cache createCache(String regionName) {
-        CacheManager cacheManager = Objects.requireNonNull(AgileEhCacheCacheManager.getCacheManager()).getCacheManager();
+        CacheManager cacheManager = AgileEhCacheCacheManager.getCacheManager();
         assert cacheManager != null;
         return (Cache) cacheManager.addCacheIfAbsent(regionName);
     }

@@ -1,8 +1,6 @@
 package cloud.agileframework.cache.support.memory;
 
 import cloud.agileframework.cache.support.AgileCache;
-import com.google.common.collect.Maps;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author 佟盟
@@ -232,7 +231,7 @@ public class MemoryCache implements AgileCache {
         }
     }
 
-    private static final Map<Object, Long> LOCK_POOL = Maps.newConcurrentMap();
+    private static final Map<Object, Long> LOCK_POOL = new ConcurrentHashMap<>();
 
     @Override
     public synchronized boolean lock(Object lock) {

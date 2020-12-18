@@ -1,6 +1,7 @@
 package cloud.agileframework.cache.config;
 
 import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -19,15 +20,22 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 @Configuration
 @ConditionalOnProperty(name = "type", prefix = "spring.cache", havingValue = "redis")
 @ConditionalOnClass({RedisCacheManager.class})
-public class RedisAutoConfiguration {
+public class RedisAutoConfiguration extends CacheAutoConfiguration {
+    @Autowired
+    private RedisConnectionFactory redisConnectionFactory;
+
+    @Autowired
+    private RedisCacheManager redisCacheManager;
+
+    @Override
     @Bean
-    AgileRedisCacheManager agileRedisCacheManager(RedisCacheManager cacheManager, RedisConnectionFactory redisConnectionFactory) {
-        return new AgileRedisCacheManager(cacheManager, redisConnectionFactory);
+    AgileRedisCacheManager agileCacheManager() {
+        return new AgileRedisCacheManager(redisCacheManager, redisConnectionFactory);
     }
 
     @Bean
     @ConditionalOnMissingBean(RedisCacheManager.class)
-    public RedisCacheManager redisCacheManager(RedisConnectionFactory redisConnectionFactory) {
+    public RedisCacheManager redisCacheManager() {
         return RedisCacheManager.create(redisConnectionFactory);
     }
 }
