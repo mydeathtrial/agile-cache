@@ -2,7 +2,6 @@ package cloud.agileframework.cache.config;
 
 import cloud.agileframework.cache.properties.EhCacheProperties;
 import cloud.agileframework.cache.support.ehcache.AgileEhCacheCacheManager;
-import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.DiskStoreConfiguration;
@@ -23,7 +22,7 @@ import java.util.Map;
 @ConditionalOnClass({CacheManager.class})
 @ConditionalOnMissingBean({org.springframework.cache.CacheManager.class})
 @ConditionalOnProperty(name = "type", prefix = "spring.cache", havingValue = "ehcache")
-public class EhCacheAutoConfiguration extends CacheAutoConfiguration{
+public class EhCacheAutoConfiguration implements CacheAutoConfiguration {
     private final EhCacheProperties ehCacheProperties;
 
     public EhCacheAutoConfiguration(EhCacheProperties ehCacheProperties) {
@@ -32,7 +31,7 @@ public class EhCacheAutoConfiguration extends CacheAutoConfiguration{
 
     @Override
     @Bean
-    AgileEhCacheCacheManager agileCacheManager() {
+    public AgileEhCacheCacheManager agileCacheManager() {
         return new AgileEhCacheCacheManager(ehCacheCacheManager());
     }
 

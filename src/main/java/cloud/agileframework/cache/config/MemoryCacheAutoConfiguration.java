@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties(CacheProperties.class)
 @AutoConfigureAfter({EhCacheAutoConfiguration.class, RedisAutoConfiguration.class})
-public class MemoryCacheAutoConfiguration extends CacheAutoConfiguration {
+public class MemoryCacheAutoConfiguration implements CacheAutoConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 

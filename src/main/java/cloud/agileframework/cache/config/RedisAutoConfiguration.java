@@ -20,7 +20,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 @Configuration
 @ConditionalOnProperty(name = "type", prefix = "spring.cache", havingValue = "redis")
 @ConditionalOnClass({RedisCacheManager.class})
-public class RedisAutoConfiguration extends CacheAutoConfiguration {
+public class RedisAutoConfiguration implements CacheAutoConfiguration {
     @Autowired
     private RedisConnectionFactory redisConnectionFactory;
 
@@ -29,7 +29,7 @@ public class RedisAutoConfiguration extends CacheAutoConfiguration {
 
     @Override
     @Bean
-    AgileRedisCacheManager agileCacheManager() {
+    public AgileRedisCacheManager agileCacheManager() {
         return new AgileRedisCacheManager(redisCacheManager, redisConnectionFactory);
     }
 
