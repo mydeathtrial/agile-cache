@@ -266,4 +266,10 @@ public class MemoryCache implements AgileCache {
         LOCK_POOL.put(lock, currentTime + timeout.toMillis());
     }
 
+    @Override
+    public List<String> keys(Object key) {
+        return null;
+    }
+
+
 }

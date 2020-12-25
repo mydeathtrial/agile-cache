@@ -170,6 +170,12 @@ public class AgileRedis extends AbstractAgileCache {
         execute(name, connection -> connection.expire(createAndConvertCacheKey(createCacheLockKey(lock)), timeout.getSeconds()));
     }
 
+    @Override
+    public List<String> keys(Object key) {
+        Set<byte[]> set = execute(name, connection -> connection.keys(createAndConvertCacheKey(key)));
+        return set.stream().map(n -> ((String) deserializeCacheKey(n)).replace(name + "::", "")).collect(Collectors.toList());
+    }
+
     private byte[] createAndConvertCacheKey(Object key) {
         return serializeCacheKey(createCacheKey(key));
     }

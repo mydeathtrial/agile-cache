@@ -3,6 +3,7 @@ package cloud.agileframework.cache.support;
 import org.springframework.cache.Cache;
 
 import java.time.Duration;
+import java.util.List;
 
 /**
  * @author 佟盟
@@ -207,4 +208,11 @@ public interface AgileCache extends Cache {
      */
     void unlock(Object lock, Duration timeout);
 
+    /**
+     * 模糊匹配key
+     *
+     * @param key   key匹配表达式
+     * @return 集合
+     */
+    List<String> keys(Object key);
 }

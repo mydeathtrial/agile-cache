@@ -45,6 +45,14 @@ public class TestTask {
     }
 
     @Test
+    public void get() {
+        CacheUtil.put("tudou1", "1");
+        CacheUtil.put("tudou2", "1");
+        CacheUtil.getCache().keys("tudou*");
+        logger.info(CacheUtil.get("tudou", String.class));
+    }
+
+    @Test
     public void delete() {
         CacheUtil.put("tudou", "1");
         CacheUtil.evict("tudou");

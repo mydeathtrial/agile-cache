@@ -210,4 +210,10 @@ public class AgileEhCache extends AbstractAgileCache {
         ehcache.put(new Element(lock, new byte[0], timeout.getSeconds()));
     }
 
+    @Override
+    public List<String> keys(Object key) {
+        return null;
+    }
+
+
 }
