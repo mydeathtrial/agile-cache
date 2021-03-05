@@ -2,6 +2,7 @@ package cloud.agileframework.cache.util;
 
 import cloud.agileframework.cache.support.AgileCache;
 import cloud.agileframework.cache.support.AgileCacheManagerInterface;
+import cloud.agileframework.common.util.clazz.TypeReference;
 import cloud.agileframework.spring.util.BeanUtil;
 import org.springframework.cache.Cache;
 
@@ -109,6 +110,10 @@ public class CacheUtil {
 
     public static <T> T get(Object key, Class<T> clazz) {
         return getCache(DEFAULT_CACHE_NAME).get(key, clazz);
+    }
+
+    public static <T> T get(Object key, TypeReference<T> typeReference) {
+        return getCache(DEFAULT_CACHE_NAME).get(key, typeReference);
     }
 
     /**

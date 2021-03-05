@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentMap;
  * @version 1.0
  * @since 1.0
  */
-public abstract class AgileCacheManager implements AgileCacheManagerInterface {
+public abstract class AbstractAgileCacheManager implements AgileCacheManagerInterface {
     private static final ConcurrentMap<String, AgileCache> CACHE_MAP = new ConcurrentHashMap<>();
 
     @Override

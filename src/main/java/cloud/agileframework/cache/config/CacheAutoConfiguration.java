@@ -1,6 +1,6 @@
 package cloud.agileframework.cache.config;
 
-import cloud.agileframework.cache.support.AgileCacheManager;
+import cloud.agileframework.cache.support.AbstractAgileCacheManager;
 
 /**
  * @author 佟盟
@@ -15,5 +15,5 @@ public interface CacheAutoConfiguration {
      *
      * @return Agile的缓存管理器
      */
-    AgileCacheManager agileCacheManager();
+    AbstractAgileCacheManager agileCacheManager();
 }

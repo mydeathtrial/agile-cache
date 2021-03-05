@@ -8,8 +8,8 @@ package cloud.agileframework.cache.support.memory;
  * @since 1.0
  */
 public class Node {
-    private long timeout;
-    private Object value;
+    private final long timeout;
+    private final Object value;
 
     public Node(long timeout, Object value) {
         this.timeout = timeout;

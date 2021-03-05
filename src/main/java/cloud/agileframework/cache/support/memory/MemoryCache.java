@@ -1,6 +1,8 @@
 package cloud.agileframework.cache.support.memory;
 
 import cloud.agileframework.cache.support.AgileCache;
+import org.springframework.util.AntPathMatcher;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * @author 佟盟
@@ -266,10 +268,16 @@ public class MemoryCache implements AgileCache {
         LOCK_POOL.put(lock, currentTime + timeout.toMillis());
     }
 
+    private static final AntPathMatcher ANT = new AntPathMatcher();
+
     @Override
     public List<String> keys(Object key) {
-        return null;
+        final String pattern = String.valueOf(key);
+        return store.keySet()
+                .stream()
+                .filter(a -> ANT.match(pattern, String.valueOf(a)))
+                .map(a -> (String) a)
+                .collect(Collectors.toList());
     }
-
 
 }

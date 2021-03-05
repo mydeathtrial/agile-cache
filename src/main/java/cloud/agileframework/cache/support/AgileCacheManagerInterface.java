@@ -10,9 +10,27 @@ import org.springframework.cache.Cache;
  * @since 1.0
  */
 public interface AgileCacheManagerInterface {
+    /**
+     * 包装、转换，把spring-cache转换为AgileCache
+     *
+     * @param cache spring-cache
+     * @return agileCache
+     */
     AgileCache cover(Cache cache);
 
+    /**
+     * 获取不存在的缓存
+     *
+     * @param cacheName 缓存名
+     * @return agileCache
+     */
     AgileCache getMissingCache(String cacheName);
 
+    /**
+     * 根据名字获取缓存
+     *
+     * @param cacheName 缓存名
+     * @return agileCache
+     */
     AgileCache getCache(String cacheName);
 }

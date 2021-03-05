@@ -5,6 +5,7 @@ import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import org.springframework.cache.ehcache.EhCacheCache;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.NumberUtils;
 
 import java.time.Duration;
@@ -14,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author 佟盟
@@ -210,9 +212,17 @@ public class AgileEhCache extends AbstractAgileCache {
         ehcache.put(new Element(lock, new byte[0], timeout.getSeconds()));
     }
 
+    private static final AntPathMatcher ANT = new AntPathMatcher();
+
     @Override
     public List<String> keys(Object key) {
-        return null;
+        final String pattern = String.valueOf(key);
+        Ehcache ehCache = getEhCache();
+        List<Object> keys = ehCache.getKeys();
+        return keys.stream()
+                .map(String::valueOf)
+                .filter(b -> ANT.match(pattern, b))
+                .collect(Collectors.toList());
     }
 
 

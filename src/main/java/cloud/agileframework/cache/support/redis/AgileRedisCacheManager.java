@@ -1,7 +1,7 @@
 package cloud.agileframework.cache.support.redis;
 
+import cloud.agileframework.cache.support.AbstractAgileCacheManager;
 import cloud.agileframework.cache.support.AgileCache;
-import cloud.agileframework.cache.support.AgileCacheManager;
 import org.springframework.cache.Cache;
 import org.springframework.data.redis.cache.RedisCache;
 import org.springframework.data.redis.cache.RedisCacheManager;
@@ -15,7 +15,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
  * @since 1.0
  */
 
-public class AgileRedisCacheManager extends AgileCacheManager {
+public class AgileRedisCacheManager extends AbstractAgileCacheManager {
 
     private static RedisCacheManager cacheManager;
     private final RedisConnectionFactory redisConnectionFactory;

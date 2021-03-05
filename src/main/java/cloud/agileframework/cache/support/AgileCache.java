@@ -1,5 +1,7 @@
 package cloud.agileframework.cache.support;
 
+import cloud.agileframework.common.util.clazz.TypeReference;
+import cloud.agileframework.common.util.object.ObjectUtil;
 import org.springframework.cache.Cache;
 
 import java.time.Duration;
@@ -70,6 +72,19 @@ public interface AgileCache extends Cache {
     <T> T get(Object key, Class<T> clazz);
 
     /**
+     * 获取
+     *
+     * @param key           索引
+     * @param typeReference 类型
+     * @param <T>           泛型
+     * @return 值
+     */
+    default <T> T get(Object key, TypeReference<T> typeReference) {
+        Object value = get(key, (Class<?>) typeReference.getWrapperClass());
+        return ObjectUtil.to(value, typeReference);
+    }
+
+    /**
      * 删除
      *
      * @param key 索引
@@ -114,6 +129,7 @@ public interface AgileCache extends Cache {
      *
      * @param mapKey map索引
      * @param key    key
+     * @param clazz  结果转换类型
      * @return 值
      */
     <T> T getFromMap(Object mapKey, Object key, Class<T> clazz);
@@ -148,6 +164,7 @@ public interface AgileCache extends Cache {
      *
      * @param listKey list索引
      * @param index   节点下标
+     * @param clazz   结果转换类型
      * @return 值
      */
     <T> T getFromList(Object listKey, int index, Class<T> clazz);
@@ -211,7 +228,7 @@ public interface AgileCache extends Cache {
     /**
      * 模糊匹配key
      *
-     * @param key   key匹配表达式
+     * @param key key匹配表达式
      * @return 集合
      */
     List<String> keys(Object key);

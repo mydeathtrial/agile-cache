@@ -1,7 +1,7 @@
 package cloud.agileframework.cache.support.memory;
 
+import cloud.agileframework.cache.support.AbstractAgileCacheManager;
 import cloud.agileframework.cache.support.AgileCache;
-import cloud.agileframework.cache.support.AgileCacheManager;
 import org.springframework.cache.Cache;
 
 /**
@@ -11,7 +11,7 @@ import org.springframework.cache.Cache;
  * @version 1.0
  * @since 1.0
  */
-public class MemoryCacheManager extends AgileCacheManager {
+public class MemoryCacheManager extends AbstractAgileCacheManager {
 
     @Override
     public AgileCache cover(Cache cache) {

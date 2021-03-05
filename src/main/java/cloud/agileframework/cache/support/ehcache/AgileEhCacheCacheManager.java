@@ -1,12 +1,11 @@
 package cloud.agileframework.cache.support.ehcache;
 
+import cloud.agileframework.cache.support.AbstractAgileCacheManager;
 import cloud.agileframework.cache.support.AgileCache;
-import cloud.agileframework.cache.support.AgileCacheManager;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import org.springframework.cache.Cache;
 import org.springframework.cache.ehcache.EhCacheCache;
-import org.springframework.cache.ehcache.EhCacheCacheManager;
 
 /**
  * @author 佟盟
@@ -15,7 +14,7 @@ import org.springframework.cache.ehcache.EhCacheCacheManager;
  * @version 1.0
  * @since 1.0
  */
-public class AgileEhCacheCacheManager extends AgileCacheManager {
+public class AgileEhCacheCacheManager extends AbstractAgileCacheManager {
 
     private static CacheManager cacheManager;
 

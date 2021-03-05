@@ -2,6 +2,7 @@ package com.agile;
 
 import cloud.agileframework.cache.support.AgileCacheManagerInterface;
 import cloud.agileframework.cache.util.CacheUtil;
+import cloud.agileframework.spring.util.BeanUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.Duration;
@@ -33,13 +35,16 @@ public class TestTask {
 
     @Autowired
     private AgileCacheManagerInterface agileCacheManagerInterface;
+
     @Before
-    public void t(){
+    public void t() {
         Object a = CacheUtil.getCache("sd");
     }
 
     @Test
     public void add() {
+        StringRedisTemplate redisTemplate = BeanUtil.getBean(StringRedisTemplate.class);
+        redisTemplate.convertAndSend("tudou", "1");
         CacheUtil.put("tudou", "1");
         logger.info(CacheUtil.get("tudou", String.class));
     }
