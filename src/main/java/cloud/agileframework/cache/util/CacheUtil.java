@@ -2,24 +2,30 @@ package cloud.agileframework.cache.util;
 
 import cloud.agileframework.cache.support.AgileCache;
 import cloud.agileframework.cache.support.AgileCacheManagerInterface;
+import cloud.agileframework.cache.support.NoCacheManager;
+import cloud.agileframework.cache.support.ehcache.AgileEhCacheCacheManager;
 import cloud.agileframework.common.util.clazz.TypeReference;
 import cloud.agileframework.spring.util.BeanUtil;
+import lombok.SneakyThrows;
 import org.springframework.cache.Cache;
 
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * @author 佟盟
  * 日期 2019/4/19 17:35
- * 描述 TODO
+ * 描述 缓存工具
  * @version 1.0
  * @since 1.0
  */
 public class CacheUtil {
+
     private static final String DEFAULT_CACHE_NAME = "common-cache";
 
+    @SneakyThrows
     public static AgileCacheManagerInterface getAgileCacheManager() {
-        return BeanUtil.getBean(AgileCacheManagerInterface.class);
+        return Optional.ofNullable(BeanUtil.getBean(AgileEhCacheCacheManager.class)).orElseThrow(NoCacheManager::new);
     }
 
     public static AgileCache getCache() {
@@ -260,31 +266,11 @@ public class CacheUtil {
     }
 
     /**
-     * 分布式同步锁
-     *
-     * @param lock    锁标识
-     * @param timeout 超时
-     * @return 是否加锁成功
-     */
-    public static boolean lock(Object lock, Duration timeout) {
-        return getCache(DEFAULT_CACHE_NAME).lock(lock, timeout);
-    }
-
-    /**
      * 解锁
      *
      * @param lock 锁标识
      */
     public static void unlock(Object lock) {
         getCache(DEFAULT_CACHE_NAME).unlock(lock);
-    }
-
-    /**
-     * 解锁
-     *
-     * @param lock 锁标识
-     */
-    public static void unlock(Object lock, Duration timeout) {
-        getCache(DEFAULT_CACHE_NAME).unlock(lock, timeout);
     }
 }

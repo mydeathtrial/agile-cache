@@ -13,6 +13,15 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "spring.ehcache")
 public class EhCacheProperties implements InitializingBean {
     /**
+     * ehcache缓存开关
+     */
+    private boolean enabled = true;
+
+    /**
+     * redis缓存同步
+     */
+    private boolean sync = false;
+    /**
      * 默认配置
      */
     private String defaultConfigName = "common-cache";
@@ -48,6 +57,22 @@ public class EhCacheProperties implements InitializingBean {
 
     public void setRegions(Map<String, CacheConfiguration> regions) {
         this.regions = regions;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public boolean isSync() {
+        return sync;
+    }
+
+    public void setSync(boolean sync) {
+        this.sync = sync;
     }
 
     @Override

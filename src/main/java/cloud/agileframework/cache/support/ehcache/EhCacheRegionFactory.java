@@ -1,5 +1,6 @@
 package cloud.agileframework.cache.support.ehcache;
 
+import cloud.agileframework.spring.util.BeanUtil;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import org.hibernate.boot.spi.SessionFactoryOptions;
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EhCacheRegionFactory extends SingletonEhcacheRegionFactory {
     private final Logger logger = LoggerFactory.getLogger(EhCacheRegionFactory.class);
     private static final AtomicInteger REFERENCE_COUNT = new AtomicInteger();
+    private volatile CacheManager cacheManager;
 
     @Override
     protected CacheManager resolveCacheManager(SessionFactoryOptions settings, Map properties) {
@@ -24,7 +26,7 @@ public class EhCacheRegionFactory extends SingletonEhcacheRegionFactory {
                 logger.info("完成初始化EhCache二级缓存区域");
             }
             REFERENCE_COUNT.incrementAndGet();
-            return AgileEhCacheCacheManager.getCacheManager();
+            return BeanUtil.getBean(AgileEhCacheCacheManager.class).getCacheManager();
         } catch (Exception e) {
             if (logger.isErrorEnabled()) {
                 logger.error("初始化EhCache二级缓存区域失败", e);
@@ -36,8 +38,6 @@ public class EhCacheRegionFactory extends SingletonEhcacheRegionFactory {
 
     @Override
     protected Cache createCache(String regionName) {
-        CacheManager cacheManager = AgileEhCacheCacheManager.getCacheManager();
-        assert cacheManager != null;
-        return (Cache) cacheManager.addCacheIfAbsent(regionName);
+        return (Cache) getCacheManager().addCacheIfAbsent(regionName);
     }
 }

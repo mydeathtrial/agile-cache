@@ -1,18 +1,20 @@
 package com.agile;
 
-import cloud.agileframework.cache.support.AgileCacheManagerInterface;
+import cloud.agileframework.cache.sync.OptimisticLockCheckError;
 import cloud.agileframework.cache.util.CacheUtil;
 import cloud.agileframework.spring.util.BeanUtil;
+import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,11 +32,8 @@ import java.util.Set;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-public class TestTask {
+public class TestTask implements Serializable {
     private final Logger logger = LoggerFactory.getLogger(TestTask.class);
-
-    @Autowired
-    private AgileCacheManagerInterface agileCacheManagerInterface;
 
     @Before
     public void t() {
@@ -65,7 +64,7 @@ public class TestTask {
     }
 
     @Test
-    public void map() {
+    public void map() throws IOException {
         CacheUtil.put("map", new HashMap<String, String>());
         CacheUtil.addToMap("map", "1", "v1");
         CacheUtil.addToMap("map", "2", "v2");
@@ -77,7 +76,7 @@ public class TestTask {
     }
 
     @Test
-    public void set() {
+    public void set() throws IOException {
         HashSet<Object> set = new HashSet<>();
         set.add("1");
         CacheUtil.put("set", set);
@@ -90,7 +89,7 @@ public class TestTask {
     }
 
     @Test
-    public void list() {
+    public void list() throws IOException {
         ArrayList<Object> list = new ArrayList<>();
         list.add("1");
         CacheUtil.put("list", list);
@@ -113,13 +112,11 @@ public class TestTask {
         logger.info("解锁");
         CacheUtil.unlock("tudou");
         logger.info("锁状态：" + (CacheUtil.lock("tudou") ? "开着呢" : "锁着呢"));
-        CacheUtil.unlock("tudou");
     }
 
     @Test
     public void lockTimeout() throws InterruptedException {
-        CacheUtil.unlock("tudou");
-        boolean lock = CacheUtil.lock("tudou", Duration.ofSeconds(10));
+        boolean lock = CacheUtil.lock("tudou");
         logger.info("上锁：" + (lock ? "成功" : "失败"));
         logger.info("锁状态：" + (CacheUtil.lock("tudou") ? "开着呢" : "锁着呢"));
         logger.info("锁状态：" + (CacheUtil.lock("tudou") ? "开着呢" : "锁着呢"));
@@ -129,16 +126,173 @@ public class TestTask {
     }
 
     @Test
-    public void unlockTimeout() throws InterruptedException {
-        CacheUtil.unlock("tudou");
-        boolean lock = CacheUtil.lock("tudou");
-        logger.info("上锁：" + (lock ? "成功" : "失败"));
-        logger.info("锁状态：" + (CacheUtil.lock("tudou") ? "开着呢" : "锁着呢"));
-        logger.info("锁状态：" + (CacheUtil.lock("tudou") ? "开着呢" : "锁着呢"));
-        CacheUtil.unlock("tudou", Duration.ofSeconds(10));
-        logger.info("锁状态：" + (CacheUtil.lock("tudou") ? "开着呢" : "锁着呢"));
-        Thread.sleep(10 * 1000);
-        logger.info("锁状态：" + (CacheUtil.lock("tudou") ? "开着呢" : "锁着呢"));
-        CacheUtil.unlock("tudou");
+    public void unlockTimeout() throws IOException {
+        final String key = "tudou";
+        Thread t1 = new Thread(() -> {
+            try {
+                CacheUtil.lock(key);
+                for (int i = 0; i < 5; i++) {
+                    CacheUtil.put(key, i);
+                    System.out.println("thread1 put " + i + " to " + key);
+                    Thread.sleep(500);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                CacheUtil.unlock(key);
+                System.out.println("thread1 end.");
+            }
+        });
+
+        Thread t2 = new Thread(new Runnable() {
+
+            boolean canRead = false;
+            boolean canWrite = false;
+
+            @Override
+            public void run() {
+                try {
+                    // 测试一
+                    while (true) {
+                        Thread.sleep(300);
+                        if (CacheUtil.lock(key)) {
+                            System.out.println("thread2 get write lock success.");
+                            canWrite = true;
+                        } else {
+                            System.out.println("thread2 cannot get write lock.");
+                        }
+
+                        if (canWrite) {
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    System.out.println("thread2 end.");
+                }
+            }
+        });
+
+        t1.start();
+        t2.start();
+//        System.in.read();
     }
+
+    /**
+     * 测试多线程
+     *
+     * @throws IOException
+     */
+    @Test
+    public void testMultipartyThread() throws IOException {
+        final String testKey = "tudou";
+
+        List<Thread> all = Lists.newArrayList();
+        int i = 100;
+        while (i > 0) {
+            int current = i--;
+            all.add(new Thread() {
+                @Override
+                public void run() {
+                    boolean success = false;
+
+                    while (!success){
+                        try {
+                            CacheUtil.put(testKey, current);
+                            success = true;
+                        }catch (OptimisticLockCheckError e){
+                            System.out.println("乐观锁失败");
+                        }
+                    }
+//                    try {
+//                        Thread.sleep(3000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                    final Long aLong = CacheUtil.get(testKey, Long.class);
+//                    if (aLong != current) {
+//                        throw new RuntimeException("出事儿了");
+//                    }else{
+//                        System.out.println("正常" + aLong);
+//                    }
+                }
+            });
+        }
+
+        all.forEach(a -> {
+            a.start();
+        });
+
+        all.forEach(a->{
+            try {
+                a.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+
+        System.out.println("主线程" + CacheUtil.get(testKey, String.class));
+//        System.in.read();
+    }
+
+    /**
+     * 测试乐观锁
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @Test
+    public void testCAS() throws IOException, InterruptedException {
+        final String testKey = "tudou";
+        CacheUtil.put(testKey, "old");
+
+        Thread.sleep(20000);
+
+        CacheUtil.put(testKey, "new");
+
+        System.out.println("主线程" + CacheUtil.get(testKey, String.class));
+//        System.in.read();
+    }
+
+    /**
+     * 测试过期
+     *
+     * @throws IOException
+     */
+    @Test
+    public void testTimeOut() throws IOException {
+        final String testKey = "tudou";
+
+        CacheUtil.put(testKey, "timeout", Duration.ofSeconds(2));
+        try {
+            Thread.sleep(2100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("主线程" + CacheUtil.get(testKey, String.class));
+//        System.in.read();
+    }
+
+    /**
+     * 测试过期
+     *
+     * @throws IOException
+     */
+    @Test
+    public void testUpdate() throws IOException, InterruptedException {
+        final String testKey = "tudou";
+
+        Demo s = new Demo();
+        s.setA("1");
+        CacheUtil.put(testKey, s);
+
+        Thread.sleep(6000);
+        s.setA("2");
+
+        System.out.println("主线程" + CacheUtil.get(testKey, Demo.class));
+//        System.in.read();
+    }
+
 }

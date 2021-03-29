@@ -2,9 +2,15 @@ package cloud.agileframework.cache.config;
 
 import cloud.agileframework.cache.properties.EhCacheProperties;
 import cloud.agileframework.cache.support.ehcache.AgileEhCacheCacheManager;
+import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
+import cloud.agileframework.cache.sync.RedisSyncCache;
+import cloud.agileframework.cache.sync.SyncCache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.DiskStoreConfiguration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,18 +26,14 @@ import java.util.Map;
 @Configuration
 @EnableConfigurationProperties(value = {EhCacheProperties.class})
 @ConditionalOnClass({CacheManager.class})
-@ConditionalOnMissingBean({org.springframework.cache.CacheManager.class})
-@ConditionalOnProperty(name = "type", prefix = "spring.cache", havingValue = "ehcache")
+@ConditionalOnProperty(name = "enabled", prefix = "spring.ehcache", matchIfMissing = true)
+@AutoConfigureAfter(RedisAutoConfiguration.class)
 public class EhCacheAutoConfiguration implements CacheAutoConfiguration {
-    private final EhCacheProperties ehCacheProperties;
+    @Autowired
+    private EhCacheProperties ehCacheProperties;
 
-    public EhCacheAutoConfiguration(EhCacheProperties ehCacheProperties) {
-        this.ehCacheProperties = ehCacheProperties;
-    }
-
-    @Override
     @Bean
-    public AgileEhCacheCacheManager agileCacheManager() {
+    public AgileEhCacheCacheManager agileEhCacheCacheManager() {
         return new AgileEhCacheCacheManager(ehCacheCacheManager());
     }
 
@@ -63,5 +65,23 @@ public class EhCacheAutoConfiguration implements CacheAutoConfiguration {
             }
         }
         return configuration;
+    }
+
+    /**
+     * 如果redis激活，则增加二级缓存
+     *
+     * @return 二级缓存工具
+     */
+    @Bean
+    @ConditionalOnBean(AgileRedisCacheManager.class)
+    public RedisSyncCache syncCache() {
+        return new RedisSyncCache();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(AgileRedisCacheManager.class)
+    public SyncCache syncCacheDefault() {
+        return new SyncCache() {
+        };
     }
 }

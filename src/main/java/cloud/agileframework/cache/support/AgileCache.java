@@ -201,14 +201,6 @@ public interface AgileCache extends Cache {
      */
     boolean lock(Object lock);
 
-    /**
-     * 分布式同步锁
-     *
-     * @param lock    锁标识
-     * @param timeout 超时
-     * @return 是否加锁成功
-     */
-    boolean lock(Object lock, Duration timeout);
 
     /**
      * 解锁
@@ -216,14 +208,6 @@ public interface AgileCache extends Cache {
      * @param lock 锁标识
      */
     void unlock(Object lock);
-
-    /**
-     * 解锁
-     *
-     * @param timeout 过期时间
-     * @param lock    锁标识
-     */
-    void unlock(Object lock, Duration timeout);
 
     /**
      * 模糊匹配key

@@ -1,11 +1,13 @@
 package cloud.agileframework.cache.support.redis;
 
 import cloud.agileframework.cache.support.AbstractAgileCacheManager;
-import cloud.agileframework.cache.support.AgileCache;
 import org.springframework.cache.Cache;
 import org.springframework.data.redis.cache.RedisCache;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author 佟盟
@@ -17,7 +19,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 public class AgileRedisCacheManager extends AbstractAgileCacheManager {
 
-    private static RedisCacheManager cacheManager;
+    private RedisCacheManager cacheManager;
     private final RedisConnectionFactory redisConnectionFactory;
 
     public AgileRedisCacheManager(RedisCacheManager cacheManager, RedisConnectionFactory redisConnectionFactory) {
@@ -25,22 +27,33 @@ public class AgileRedisCacheManager extends AbstractAgileCacheManager {
         this.redisConnectionFactory = redisConnectionFactory;
     }
 
-    public static RedisCacheManager getCacheManager() {
+    public RedisCacheManager getCacheManager() {
         return cacheManager;
     }
 
-    public static void setCacheManager(RedisCacheManager cacheManager) {
-        AgileRedisCacheManager.cacheManager = cacheManager;
+    public void setCacheManager(RedisCacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @Override
-    public AgileCache cover(Cache cache) {
+    public AgileRedis cover(Cache cache) {
         return new AgileRedis((RedisCache) cache, redisConnectionFactory);
     }
 
     @Override
-    public AgileCache getMissingCache(String cacheName) {
+    public AgileRedis getMissingCache(String cacheName) {
         return cover(cacheManager.getCache(cacheName));
     }
 
+    private final ConcurrentMap<String, AgileRedis> CACHE_MAP = new ConcurrentHashMap<>();
+
+    @Override
+    public AgileRedis getCache(String cacheName) {
+        AgileRedis cache = CACHE_MAP.get(cacheName);
+        if (cache == null) {
+            cache = getMissingCache(cacheName);
+            CACHE_MAP.putIfAbsent(cacheName, cache);
+        }
+        return cache;
+    }
 }

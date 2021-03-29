@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -51,6 +52,8 @@ public class AgileRedis extends AbstractAgileCache {
     private final String name;
 
     private final Duration sleepTime = Duration.ZERO;
+
+    private final static String TAG = UUID.randomUUID().toString();
 
     AgileRedis(RedisCache cache, RedisConnectionFactory redisConnectionFactory) {
         super(cache);
@@ -146,18 +149,64 @@ public class AgileRedis extends AbstractAgileCache {
         executeConsumer(name, connection -> connection.sRem(createAndConvertCacheKey(setKey), serializeCacheValue(node)));
     }
 
-    @Override
-    public synchronized boolean lock(Object lock) {
-        return execute(name, connection -> doLock(lock, connection));
+    public synchronized boolean lock(Object lock, Object value) {
+        return execute(name, connection -> doLock(lock, value, connection));
     }
 
-    @Override
-    public synchronized boolean lock(Object lock, Duration timeout) {
-        boolean isLock = execute(name, connection -> doLock(lock, connection));
+    public synchronized boolean lock(Object lock, Object value, Duration timeout) {
+        boolean isLock = execute(name, connection -> doLock(lock, value, connection));
         if (isLock) {
             execute(name, connection -> connection.expire(createAndConvertCacheKey(createCacheLockKey(lock)), timeout.getSeconds()));
         }
         return isLock;
+    }
+
+    /**
+     * 同进程下的同线程，不受锁限制
+     *
+     * @param lock 锁
+     * @return 是否成功上锁
+     */
+    public synchronized boolean lockOnThreadLocal(Object lock) {
+        String value = getLock(lock, String.class);
+        if (value != null && value.equals(getCurrentProcessAndThreadInfo())) {
+            return true;
+        }
+        return execute(name, connection -> doLock(lock, getCurrentProcessAndThreadInfo(), connection));
+    }
+
+    /**
+     * 同进程下的同线程，不受锁限制
+     *
+     * @param lock    锁
+     * @param timeout 过期
+     * @return 是否成功上锁
+     */
+    public synchronized boolean lockOnThreadLocal(Object lock, Duration timeout) {
+        String value = getLock(lock, String.class);
+        if (value != null && value.equals(getCurrentProcessAndThreadInfo())) {
+            execute(name, connection -> connection.expire(createAndConvertCacheKey(createCacheLockKey(lock)), timeout.getSeconds()));
+            return true;
+        }
+        boolean isLock = execute(name, connection -> doLock(lock, getCurrentProcessAndThreadInfo(), connection));
+        if (isLock) {
+            execute(name, connection -> connection.expire(createAndConvertCacheKey(createCacheLockKey(lock)), timeout.getSeconds()));
+        }
+        return isLock;
+    }
+
+    /**
+     * 取当前进程信息
+     *
+     * @return 当前进程+线程信息
+     */
+    private static String getCurrentProcessAndThreadInfo() {
+        return TAG + Thread.currentThread().toString();
+    }
+
+    @Override
+    public synchronized boolean lock(Object lock) {
+        return lock(lock, new byte[0]);
     }
 
     @Override
@@ -165,9 +214,8 @@ public class AgileRedis extends AbstractAgileCache {
         executeLockFree(connection -> doUnlock(lock, connection));
     }
 
-    @Override
-    public synchronized void unlock(Object lock, Duration timeout) {
-        execute(name, connection -> connection.expire(createAndConvertCacheKey(createCacheLockKey(lock)), timeout.getSeconds()));
+    public synchronized boolean containLock(Object lock) {
+        return containKey(createCacheLockKey(lock));
     }
 
     @Override
@@ -332,8 +380,13 @@ public class AgileRedis extends AbstractAgileCache {
         return name.toString() + "~lock";
     }
 
-    private Boolean doLock(Object name, RedisConnection connection) {
-        return connection.setNX(createAndConvertCacheKey(createCacheLockKey(name)), new byte[0]);
+    private Boolean doLock(Object name, Object value, RedisConnection connection) {
+        return connection.setNX(createAndConvertCacheKey(createCacheLockKey(name)), serializeCacheValue(value));
+    }
+
+    public <T> T getLock(Object lock, Class<T> clazz) {
+        byte[] v = execute(name, connection -> connection.get(createAndConvertCacheKey(createCacheLockKey(lock))));
+        return (T) deserializeCacheValue(v);
     }
 
     private Long doUnlock(Object name, RedisConnection connection) {
@@ -349,6 +402,16 @@ public class AgileRedis extends AbstractAgileCache {
         } finally {
             connection.close();
         }
+    }
+
+    /**
+     * 忽略集合处理直接存储
+     *
+     * @param key   key
+     * @param value 值
+     */
+    public void putIgnoreAggregate(Object key, Object value) {
+        execute(name, connection -> connection.set(createAndConvertCacheKey(key), serializeCacheValue(value)));
     }
 
     @Override
@@ -381,8 +444,7 @@ public class AgileRedis extends AbstractAgileCache {
             byte[][] set = result.toArray(arr);
             execute(name, connection -> connection.sAdd(createAndConvertCacheKey(key), set));
         } else {
-            execute(name, connection -> connection.set(createAndConvertCacheKey(key), serializeCacheValue(value)));
-//            super.put(key, value);
+            putIgnoreAggregate(key, value);
         }
     }
 

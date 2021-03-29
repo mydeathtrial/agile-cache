@@ -1,11 +1,13 @@
 package cloud.agileframework.cache.support.ehcache;
 
 import cloud.agileframework.cache.support.AbstractAgileCacheManager;
-import cloud.agileframework.cache.support.AgileCache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import org.springframework.cache.Cache;
 import org.springframework.cache.ehcache.EhCacheCache;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author 佟盟
@@ -16,32 +18,45 @@ import org.springframework.cache.ehcache.EhCacheCache;
  */
 public class AgileEhCacheCacheManager extends AbstractAgileCacheManager {
 
-    private static CacheManager cacheManager;
+    private CacheManager cacheManager;
 
     public AgileEhCacheCacheManager(CacheManager cacheManager) {
         setCacheManager(cacheManager);
     }
 
-    public static CacheManager getCacheManager() {
+    public CacheManager getCacheManager() {
         return cacheManager;
     }
 
-    public static void setCacheManager(CacheManager cacheManager) {
-        AgileEhCacheCacheManager.cacheManager = cacheManager;
+    public void setCacheManager(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @Override
-    public AgileCache cover(Cache cache) {
+    public AgileEhCache cover(Cache cache) {
         return new AgileEhCache((EhCacheCache) cache);
     }
 
     @Override
-    public AgileCache getMissingCache(String cacheName) {
+    public AgileEhCache getMissingCache(String cacheName) {
         assert cacheManager != null;
         Ehcache target = cacheManager.getEhcache(cacheName);
         if (target == null) {
             target = cacheManager.addCacheIfAbsent(cacheName);
         }
         return cover(new EhCacheCache(target));
+    }
+
+    private final ConcurrentMap<String, AgileEhCache> CACHE_MAP = new ConcurrentHashMap<>();
+
+    @Override
+    public AgileEhCache getCache(String cacheName) {
+        AgileEhCache cache = CACHE_MAP.get(cacheName);
+        if (cache == null) {
+            cache = getMissingCache(cacheName);
+            CACHE_MAP.putIfAbsent(cacheName, cache);
+        }
+//        cache.getNativeCache().getCacheEventNotificationService().registerListener(new SyncCacheEventListener());
+        return cache;
     }
 }
