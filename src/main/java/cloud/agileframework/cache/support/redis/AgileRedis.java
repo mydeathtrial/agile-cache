@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -277,14 +278,22 @@ public class AgileRedis extends AbstractAgileCache {
     }
 
     private byte[] trySerializeJsonCacheValue(Object value) {
-        try {
-            //如果可以正反序列化，则使用json
-            byte[] a = fastJsonRedisSerializer.serialize(value);
-            fastJsonRedisSerializer.deserialize(a);
-            return a;
-        } catch (Exception e) {
-            return ByteUtils.getBytes(cacheConfig.getValueSerializationPair().write(value));
+        if (value != null && fastJsonRedisSerializer.canSerialize(value.getClass())) {
+            try {
+                //如果可以正反序列化，则使用json
+                byte[] a = fastJsonRedisSerializer.serialize(value);
+                Object b = fastJsonRedisSerializer.deserialize(a);
+
+                if (Objects.equals(value, b)) {
+                    return a;
+                }
+            } catch (Exception e) {
+                logger.debug("The attempt to use fastjson in the process of redis serialization failed", e);
+            }
+        }else if(value == null){
+            return fastJsonRedisSerializer.serialize(null);
         }
+        return ByteUtils.getBytes(cacheConfig.getValueSerializationPair().write(value));
     }
 
     protected Object deserializeCacheValue(byte[] value) {
@@ -296,7 +305,7 @@ public class AgileRedis extends AbstractAgileCache {
         return tryDeserializeJsonCacheValue(value);
     }
 
-    private final GenericFastJsonRedisSerializer fastJsonRedisSerializer = new GenericFastJsonRedisSerializer();
+    private final MyGenericFastJsonRedisSerializer fastJsonRedisSerializer = new MyGenericFastJsonRedisSerializer();
 
     private Object tryDeserializeJsonCacheValue(byte[] value) {
         try {
