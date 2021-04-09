@@ -1,6 +1,7 @@
 package cloud.agileframework.cache.sync;
 
 import cloud.agileframework.cache.support.AgileCache;
+import cloud.agileframework.cache.support.ehcache.AgileEhCache;
 import cloud.agileframework.cache.support.ehcache.AgileEhCacheCacheManager;
 import cloud.agileframework.cache.support.redis.AgileRedis;
 import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
@@ -109,9 +110,9 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
      * @param syncKeys key信息
      */
     private void redisToEhcache(SyncKeys syncKeys, OpType opType) {
-        final Ehcache ehcache = agileEhCacheCacheManager.getCache(syncKeys.getRegion()).getNativeCache();
+        final AgileEhCache ehcache = agileEhCacheCacheManager.getCache(syncKeys.getRegion());
         if (OpType.DELETE == opType) {
-            ehcache.remove(syncKeys.getData());
+            ehcache.directEvict(syncKeys.getData());
         } else if (OpType.READ == opType || OpType.WRITE == opType) {
             //取缓存数据
             final AgileCache redisCache = agileRedisCacheManager.getCache(syncKeys.getRegion());
@@ -121,7 +122,8 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
                 return;
             }
 
-            ehcache.put(new Element(syncKeys.getData(), valueWrapper.get()));
+
+            ehcache.directPut(syncKeys.getData(), valueWrapper.get());
 
             syncVersion(syncKeys);
         }

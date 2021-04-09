@@ -135,7 +135,13 @@ public class AgileRedis extends AbstractAgileCache {
     @Override
     public void removeFromList(Object listKey, int index) {
         logger.info(String.format("操作:删%n区域：%s%nkey值：%s%n", cache.getName(), listKey));
-        executeConsumer(name, connection -> connection.lRem(createAndConvertCacheKey(listKey), 0, serializeCacheValue(getFromList(listKey, index))));
+        executeConsumer(name, connection -> connection.lRem(createAndConvertCacheKey(listKey), 1, serializeCacheValue(getFromList(listKey, index))));
+    }
+
+    @Override
+    public void removeFromList0(Object listKey, Object o) {
+        logger.info(String.format("操作:删%n区域：%s%nkey值：%s%n", cache.getName(), listKey));
+        executeConsumer(name, connection -> connection.lRem(createAndConvertCacheKey(listKey), 0, serializeCacheValue(o)));
     }
 
     @Override

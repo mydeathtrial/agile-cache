@@ -101,7 +101,7 @@ public class AgileEhCache extends AbstractAgileCache {
             Element element = new Element(key, value);
             element.setTimeToLive(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()), Integer.class));
             element.setTimeToIdle(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()), Integer.class));
-            element.setEternal(true);
+            element.setEternal(false);
 
             Element old = ehCache.get(key);
             if (old == null) {
@@ -117,24 +117,27 @@ public class AgileEhCache extends AbstractAgileCache {
 
     @Override
     public void put(Object key, Object value) {
+        syncCache().sync(getName(), key.toString(), () -> {
+            directPut(key, value);
+            return null;
+        }, OpType.WRITE);
+    }
+
+    public void directPut(Object key, Object value){
         //内存缓存保留28~32分钟之间的随机值，防止穿透，
         long randomRange = RandomUtils.nextLong(1680000, 1920000);
         final Duration timeout = Duration.ofMillis(randomRange);
-        syncCache().sync(getName(), key.toString(), () -> {
-            Ehcache ehCache = getNativeCache();
-            Element element = new Element(key, value);
-            element.setTimeToLive(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()), Integer.class));
-            element.setTimeToIdle(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()), Integer.class));
-            element.setEternal(true);
+        Ehcache ehCache = getNativeCache();
+        Element element = new Element(key, value);
+        element.setTimeToIdle(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()), Integer.class));
+        element.setEternal(false);
 
-            Element old = ehCache.get(key);
-            if (old == null) {
-                ehCache.put(element);
-            } else {
-                ehCache.replace(old, element);
-            }
-            return null;
-        }, OpType.WRITE);
+        Element old = ehCache.get(key);
+        if (old == null) {
+            ehCache.put(element);
+        } else {
+            ehCache.replace(old, element);
+        }
     }
 
     @Override
@@ -145,9 +148,13 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public void evict(Object key) {
         syncCache().sync(getName(), key.toString(), () -> {
-            super.evict(key);
+            directEvict(key);
             return null;
         }, OpType.DELETE);
+    }
+
+    public void directEvict(Object key) {
+        super.evict(key);
     }
 
     @Override
@@ -219,6 +226,7 @@ public class AgileEhCache extends AbstractAgileCache {
         syncCache().sync(getName(), mapKey.toString(), () -> {
             Map<Object, Object> map = getMap(mapKey, true);
             map.put(key, value);
+            put(mapKey, map);
             return null;
         }, OpType.WRITE);
 
@@ -249,8 +257,9 @@ public class AgileEhCache extends AbstractAgileCache {
         syncCache().sync(getName(), mapKey.toString(), () -> {
             Map<Object, Object> map = getMap(mapKey, false);
             map.remove(key);
+            put(mapKey, map);
             return null;
-        }, OpType.DELETE);
+        }, OpType.WRITE);
     }
 
     @Override
@@ -258,8 +267,9 @@ public class AgileEhCache extends AbstractAgileCache {
         syncCache().sync(getName(), listKey.toString(), () -> {
             List<Object> list = getList(listKey, true);
             list.add(node);
+            put(listKey, list);
             return null;
-        }, OpType.DELETE);
+        }, OpType.WRITE);
     }
 
     @Override
@@ -287,8 +297,19 @@ public class AgileEhCache extends AbstractAgileCache {
         syncCache().sync(getName(), listKey.toString(), () -> {
             List<Object> list = getList(listKey, false);
             list.remove(index);
+            put(listKey, list);
             return null;
-        }, OpType.DELETE);
+        }, OpType.WRITE);
+    }
+
+    @Override
+    public void removeFromList0(Object listKey, Object o) {
+        syncCache().sync(getName(), listKey.toString(), () -> {
+            List<Object> list = getList(listKey, false);
+            list.remove(o);
+            put(listKey, list);
+            return null;
+        }, OpType.WRITE);
     }
 
     @Override
@@ -296,6 +317,7 @@ public class AgileEhCache extends AbstractAgileCache {
         syncCache().sync(getName(), setKey.toString(), () -> {
             Set<Object> set = getSet(setKey, true);
             set.add(node);
+            put(setKey, set);
             return null;
         }, OpType.WRITE);
     }
@@ -305,8 +327,9 @@ public class AgileEhCache extends AbstractAgileCache {
         syncCache().sync(getName(), setKey.toString(), () -> {
             Set<Object> set = getSet(setKey, false);
             set.remove(node);
+            put(setKey, set);
             return null;
-        }, OpType.DELETE);
+        }, OpType.WRITE);
     }
 
     @Override
@@ -315,6 +338,19 @@ public class AgileEhCache extends AbstractAgileCache {
         boolean isLock;
         try {
             isLock = ehcache.tryWriteLockOnKey(lock, 1);
+        } catch (InterruptedException e) {
+            isLock = false;
+            Thread.currentThread().interrupt();
+        }
+
+        return isLock;
+    }
+
+    public synchronized boolean lockRead(Object lock) {
+        Ehcache ehcache = getNativeCache();
+        boolean isLock;
+        try {
+            isLock = ehcache.tryReadLockOnKey(lock, 1);
         } catch (InterruptedException e) {
             isLock = false;
             Thread.currentThread().interrupt();

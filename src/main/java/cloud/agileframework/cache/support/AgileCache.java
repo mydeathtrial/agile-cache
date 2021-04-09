@@ -178,6 +178,14 @@ public interface AgileCache extends Cache {
     void removeFromList(Object listKey, int index);
 
     /**
+     * 从List中删除下标节点
+     *
+     * @param listKey list索引
+     * @param index   节点下标
+     */
+    void removeFromList0(Object listKey, Object index);
+
+    /**
      * 向set中添加节点
      *
      * @param setKey set索引
