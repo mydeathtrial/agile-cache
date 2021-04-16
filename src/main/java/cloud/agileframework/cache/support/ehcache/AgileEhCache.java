@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
  */
 public class AgileEhCache extends AbstractAgileCache {
 
+    public static final CacheException CACHE_EXCEPTION = new CacheException("Target data is not the expected type");
+
     AgileEhCache(EhCacheCache cache) {
         super(cache);
     }
@@ -123,7 +125,7 @@ public class AgileEhCache extends AbstractAgileCache {
         }, OpType.WRITE);
     }
 
-    public void directPut(Object key, Object value){
+    public void directPut(Object key, Object value) {
         //内存缓存保留28~32分钟之间的随机值，防止穿透，
         long randomRange = RandomUtils.nextLong(1680000, 1920000);
         final Duration timeout = Duration.ofMillis(randomRange);
@@ -162,69 +164,56 @@ public class AgileEhCache extends AbstractAgileCache {
         return syncCache().sync(getName(), key.toString(), () -> getNativeCache().get(key) != null, OpType.READ);
     }
 
-    private Map<Object, Object> getMap(Object mapKey, boolean require) {
-        return syncCache().sync(getName(), mapKey.toString(), () -> {
-            Element value = getNativeCache().get(mapKey);
-            if (value == null) {
-                if (require) {
-                    value = new Element(mapKey, new HashMap<>(0));
-                    getNativeCache().put(value);
-                } else {
-                    throw new CacheException("Cache data does not exist");
-                }
-            }
-            Object map = value.getObjectValue();
-            if (!Map.class.isAssignableFrom(map.getClass())) {
-                throw new CacheException("Target data is not the expected type");
-            }
+    private Map<Object, Object> directGetMap(Object mapKey) {
+        Element value = getNativeCache().get(mapKey);
+        if (value == null) {
+            final HashMap<Object, Object> result = new HashMap<>(0);
+            value = new Element(mapKey, result);
+            getNativeCache().put(value);
+            return result;
+        }
+        Object map = value.getObjectValue();
+        if (!Map.class.isAssignableFrom(map.getClass())) {
+            throw CACHE_EXCEPTION;
+        }
 
-            return (Map<Object, Object>) map;
-        }, OpType.READ);
+        return (Map<Object, Object>) map;
     }
 
-    private List<Object> getList(Object listKey, boolean require) {
-        return syncCache().sync(getName(), listKey.toString(), () -> {
-            Element value = getNativeCache().get(listKey);
-            if (value == null) {
-                if (require) {
-                    value = new Element(listKey, new ArrayList<>());
-                    getNativeCache().put(value);
-                } else {
-                    throw new CacheException("Cache data does not exist");
-                }
-            }
-            Object map = value.getObjectValue();
-            if (!List.class.isAssignableFrom(map.getClass())) {
-                throw new CacheException("Target data is not the expected type");
-            }
-            return (List) map;
-        }, OpType.READ);
-
+    private List<Object> directGetList(Object listKey) {
+        Element value = getNativeCache().get(listKey);
+        if (value == null) {
+            final ArrayList<Object> result = new ArrayList<>();
+            value = new Element(listKey, result);
+            getNativeCache().put(value);
+            return result;
+        }
+        Object list = value.getObjectValue();
+        if (!List.class.isAssignableFrom(list.getClass())) {
+            throw CACHE_EXCEPTION;
+        }
+        return (List) list;
     }
 
-    private Set<Object> getSet(Object setKey, boolean require) {
-        return syncCache().sync(getName(), setKey.toString(), () -> {
-            Element value = getNativeCache().get(setKey);
-            if (value == null) {
-                if (require) {
-                    value = new Element(setKey, new HashSet<>());
-                    getNativeCache().put(value);
-                } else {
-                    throw new CacheException("Cache data does not exist");
-                }
-            }
-            Object map = value.getObjectValue();
-            if (!Set.class.isAssignableFrom(map.getClass())) {
-                throw new CacheException("Target data is not the expected type");
-            }
-            return (Set) map;
-        }, OpType.READ);
+    private Set<Object> directGetSet(Object setKey) {
+        Element value = getNativeCache().get(setKey);
+        if (value == null) {
+            final HashSet<Object> result = new HashSet<>();
+            value = new Element(setKey, result);
+            getNativeCache().put(value);
+            return result;
+        }
+        Object map = value.getObjectValue();
+        if (!Set.class.isAssignableFrom(map.getClass())) {
+            throw CACHE_EXCEPTION;
+        }
+        return (Set) map;
     }
 
     @Override
     public void addToMap(Object mapKey, Object key, Object value) {
         syncCache().sync(getName(), mapKey.toString(), () -> {
-            Map<Object, Object> map = getMap(mapKey, true);
+            Map<Object, Object> map = directGetMap(mapKey);
             map.put(key, value);
             put(mapKey, map);
             return null;
@@ -235,7 +224,7 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public Object getFromMap(Object mapKey, Object key) {
         return syncCache().sync(getName(), mapKey.toString(), () -> {
-            Map<Object, Object> map = getMap(mapKey, false);
+            Map<Object, Object> map = directGetMap(mapKey);
             return map.get(key);
         }, OpType.READ);
     }
@@ -243,7 +232,8 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public <T> T getFromMap(Object mapKey, Object key, Class<T> clazz) {
         return syncCache().sync(getName(), mapKey.toString(), () -> {
-            Object value = getFromMap(mapKey, key);
+            Map<Object, Object> map = directGetMap(mapKey);
+            Object value = map.get(key);
             if (value != null && clazz != null && !clazz.isInstance(value)) {
                 throw new IllegalStateException(
                         "Cached value is not of required type [" + clazz.getName() + "]: " + value);
@@ -255,7 +245,7 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public void removeFromMap(Object mapKey, Object key) {
         syncCache().sync(getName(), mapKey.toString(), () -> {
-            Map<Object, Object> map = getMap(mapKey, false);
+            Map<Object, Object> map = directGetMap(mapKey);
             map.remove(key);
             put(mapKey, map);
             return null;
@@ -265,7 +255,7 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public void addToList(Object listKey, Object node) {
         syncCache().sync(getName(), listKey.toString(), () -> {
-            List<Object> list = getList(listKey, true);
+            List<Object> list = directGetList(listKey);
             list.add(node);
             put(listKey, list);
             return null;
@@ -275,7 +265,7 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public Object getFromList(Object listKey, int index) {
         return syncCache().sync(getName(), listKey.toString(), () -> {
-            List<Object> list = getList(listKey, false);
+            List<Object> list = directGetList(listKey);
             return list.get(index);
         }, OpType.READ);
     }
@@ -295,7 +285,7 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public void removeFromList(Object listKey, int index) {
         syncCache().sync(getName(), listKey.toString(), () -> {
-            List<Object> list = getList(listKey, false);
+            List<Object> list = directGetList(listKey);
             list.remove(index);
             put(listKey, list);
             return null;
@@ -305,7 +295,7 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public void removeFromList0(Object listKey, Object o) {
         syncCache().sync(getName(), listKey.toString(), () -> {
-            List<Object> list = getList(listKey, false);
+            List<Object> list = directGetList(listKey);
             list.remove(o);
             put(listKey, list);
             return null;
@@ -315,7 +305,7 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public void addToSet(Object setKey, Object node) {
         syncCache().sync(getName(), setKey.toString(), () -> {
-            Set<Object> set = getSet(setKey, true);
+            Set<Object> set = directGetSet(setKey);
             set.add(node);
             put(setKey, set);
             return null;
@@ -325,7 +315,7 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public void removeFromSet(Object setKey, Object node) {
         syncCache().sync(getName(), setKey.toString(), () -> {
-            Set<Object> set = getSet(setKey, false);
+            Set<Object> set = directGetSet(setKey);
             set.remove(node);
             put(setKey, set);
             return null;

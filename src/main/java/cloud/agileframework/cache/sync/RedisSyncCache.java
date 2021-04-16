@@ -219,6 +219,10 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
 
             switch (opType) {
                 case READ:
+                    T v = supplier.get();
+                    if (v != null) {
+                        return v;
+                    }
                     if (syncData(syncKeys)) {
                         return supplier.get();
                     }

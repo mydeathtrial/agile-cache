@@ -1,5 +1,6 @@
 package cloud.agileframework.cache.support;
 
+import cloud.agileframework.common.util.clazz.ClassUtil;
 import cloud.agileframework.common.util.clazz.TypeReference;
 import cloud.agileframework.common.util.object.ObjectUtil;
 import org.springframework.cache.Cache;
@@ -80,7 +81,7 @@ public interface AgileCache extends Cache {
      * @return 值
      */
     default <T> T get(Object key, TypeReference<T> typeReference) {
-        Object value = get(key, (Class<?>) typeReference.getWrapperClass());
+        Object value = get(key, ClassUtil.getWrapper(typeReference.getType()));
         return ObjectUtil.to(value, typeReference);
     }
 
