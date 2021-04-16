@@ -5,8 +5,8 @@
 
 ## 它有什么作用
 
-* **缓存切换**
-  切换方式与spring boot cache切换方式一致，均使用元数据spring.cache.type进行配置，当不存在该配置情况下，默认使用内存介质
+* **二级缓存**
+  自动实现耳机缓存同步，无需任何编码及复杂配置。ehcache作为一级缓存、redis作为二级缓存，默认二级缓存关闭
 
 * **统一操作方式**
   解析器通过提供CacheUtil、AgileCache，屏蔽掉各类型缓存介质的操作差异，以最简单的形式提供开发者开箱即用的缓存操作
@@ -14,8 +14,11 @@
 * **缓存过期**
   支持存储过程中直接设置缓存过期时间
 
-* **分布式/集群锁**
-  当缓存介质为redis时，通过CacheUtil或AgileCache的lock与unlock提供锁操作
+* **分布式/集群**
+  通过redis发布订阅，自动完成一二级缓存同步与集群/分布式缓存同步操作
+
+* **并发操作**
+  内部通过读写锁、乐观锁、锁粒度等方式，防止在一二级缓存同步过程中出现的并发问题，提高读写性能
 
 * **集合数据操作**
   CacheUtil、AgileCache针对不同存储介质提供一致性的集合数据操作API，参考快速入门
@@ -37,7 +40,7 @@
 
 您可以从[最新稳定版本]下载包(https://github.com/mydeathtrial/agile-cache/releases). 该包已上传至maven中央仓库，可在pom中直接声明引用
 
-以版本agile-cache-2.0.10.jar为例。
+以版本agile-cache-2.0.11.jar为例。
 
 #### 步骤 2: 添加maven依赖
 
@@ -53,7 +56,7 @@
 <dependency>
 <groupId>cloud.agileframework</groupId>
 <artifactId>agile-cache</artifactId>
-<version>2.0.10</version>
+<version>2.0.11</version>
 </dependency>
 ```
 
@@ -232,6 +235,12 @@ public class YourClass {
 解析器中涵盖的EhCache解析器提供yml或properties形式配置，配置项与EhCache官方标准名一致，以默认公共缓存域common-cache为例：
 
 ```properties
+//缓存组件启用开关
+spring.ehcache.enabled=true
+
+//开启redis二级缓存同步开关
+spring.ehcache.sync=true
+
 spring.ehcache.default-config-name=common-cache
 spring.ehcache.path=/temp
 spring.ehcache.regions.common-cache.max-entries-local-heap=10000
