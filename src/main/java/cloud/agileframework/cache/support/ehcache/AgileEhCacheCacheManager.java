@@ -1,10 +1,14 @@
 package cloud.agileframework.cache.support.ehcache;
 
 import cloud.agileframework.cache.support.AbstractAgileCacheManager;
+import cloud.agileframework.cache.sync.RedisSyncCache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.event.CacheEventListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.ehcache.EhCacheCache;
+import org.springframework.context.annotation.Primary;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -19,9 +23,15 @@ import java.util.concurrent.ConcurrentMap;
 public class AgileEhCacheCacheManager extends AbstractAgileCacheManager {
 
     private CacheManager cacheManager;
+    private CacheEventListener syncCacheEventListener;
 
     public AgileEhCacheCacheManager(CacheManager cacheManager) {
-        setCacheManager(cacheManager);
+        this.cacheManager = cacheManager;
+    }
+
+    @Autowired
+    public void setSyncCacheEventListener(CacheEventListener syncCacheEventListener) {
+        this.syncCacheEventListener = syncCacheEventListener;
     }
 
     public CacheManager getCacheManager() {
@@ -47,7 +57,7 @@ public class AgileEhCacheCacheManager extends AbstractAgileCacheManager {
         return cover(new EhCacheCache(target));
     }
 
-    private final ConcurrentMap<String, AgileEhCache> CACHE_MAP = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, AgileEhCache> CACHE_MAP = new ConcurrentHashMap<>();
 
     @Override
     public AgileEhCache getCache(String cacheName) {
@@ -55,8 +65,9 @@ public class AgileEhCacheCacheManager extends AbstractAgileCacheManager {
         if (cache == null) {
             cache = getMissingCache(cacheName);
             CACHE_MAP.putIfAbsent(cacheName, cache);
+            cache.getNativeCache().getCacheEventNotificationService().registerListener(syncCacheEventListener);
         }
-//        cache.getNativeCache().getCacheEventNotificationService().registerListener(new SyncCacheEventListener());
+
         return cache;
     }
 }

@@ -1,5 +1,6 @@
 package cloud.agileframework.cache.support;
 
+import net.sf.ehcache.CacheException;
 import org.springframework.cache.Cache;
 import org.springframework.data.redis.serializer.SerializationException;
 
@@ -8,14 +9,15 @@ import java.util.concurrent.Callable;
 /**
  * @author 佟盟
  * 日期 2019/7/23 18:19
- * 描述 TODO
+ * 描述 抽象缓存
  * @version 1.0
  * @since 1.0
  */
 public abstract class AbstractAgileCache implements AgileCache {
+    public static final CacheException CACHE_EXCEPTION = new CacheException("Target data is not the expected type");
     protected Cache cache;
 
-    public AbstractAgileCache(Cache cache) {
+    protected AbstractAgileCache(Cache cache) {
         this.cache = cache;
     }
 

@@ -1,6 +1,8 @@
 package cloud.agileframework.cache.config;
 
 import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
+import cloud.agileframework.cache.sync.RedisSyncCache;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,7 +19,6 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
  * @since 1.0
  */
 @Configuration
-@ConditionalOnProperty(name = "sync", prefix = "spring.ehcache")
 @ConditionalOnClass({RedisCacheManager.class})
 public class RedisAutoConfiguration implements CacheAutoConfiguration {
 

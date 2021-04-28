@@ -1,5 +1,8 @@
 package cloud.agileframework.cache.sync;
 
+import cloud.agileframework.spring.sync.Runner;
+
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -11,8 +14,19 @@ import java.util.function.Supplier;
  */
 public interface SyncCache {
 
-    default <T> T sync(String region, String key, Supplier<T> supplier, OpType opType) {
+    /**
+     * 二级缓存同步执行
+     * @param syncKeys 相关的缓存key信息
+     * @param supplier 执行方法
+     * @param opType 执行类型
+     * @param <T> 返回的数据类型
+     * @return 执行方法返回值
+     */
+    default <T> T sync(SyncKeys syncKeys, Supplier<T> supplier, OpType opType) {
         return supplier.get();
+    }
+
+    default void sync(SyncKeys syncKeys, OpType opType) {
     }
 
     default void clear(String region) {

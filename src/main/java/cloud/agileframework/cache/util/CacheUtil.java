@@ -25,7 +25,7 @@ public class CacheUtil {
 
     @SneakyThrows
     public static AgileCacheManagerInterface getAgileCacheManager() {
-        return Optional.ofNullable(BeanUtil.getBean(AgileEhCacheCacheManager.class)).orElseThrow(NoCacheManager::new);
+        return Optional.ofNullable(BeanUtil.getBean(AgileCacheManagerInterface.class)).orElseThrow(NoCacheManager::new);
     }
 
     public static AgileCache getCache() {

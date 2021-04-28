@@ -80,10 +80,7 @@ public interface AgileCache extends Cache {
      * @param <T>           泛型
      * @return 值
      */
-    default <T> T get(Object key, TypeReference<T> typeReference) {
-        Object value = get(key, ClassUtil.getWrapper(typeReference.getType()));
-        return ObjectUtil.to(value, typeReference);
-    }
+    <T> T get(Object key, TypeReference<T> typeReference);
 
     /**
      * 删除
@@ -177,14 +174,6 @@ public interface AgileCache extends Cache {
      * @param index   节点下标
      */
     void removeFromList(Object listKey, int index);
-
-    /**
-     * 从List中删除下标节点
-     *
-     * @param listKey list索引
-     * @param index   节点下标
-     */
-    void removeFromList0(Object listKey, Object index);
 
     /**
      * 向set中添加节点

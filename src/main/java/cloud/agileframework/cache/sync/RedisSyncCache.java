@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  * @version 1.0
  * @since 1.0
  */
-public class RedisSyncCache extends AbstractSyncCache implements MessageListener {
+public class RedisSyncCache implements MessageListener, SyncCache {
     public static final String LOCK_CACHE_KEY = "key";
 
     @Autowired
@@ -98,8 +98,14 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
 
             //升级版本号
             syncKeys.getVersionData().addAndGet(1);
-            redisCache.putIgnoreAggregate(syncKeys.getData(), element.getObjectValue());
-            redisCache.putIgnoreAggregate(syncKeys.getVersion(), syncKeys.getVersionData().get());
+            if (syncKeys instanceof SyncKeys.SyncKeysWithTimeout) {
+                final Duration timeout = ((SyncKeys.SyncKeysWithTimeout) syncKeys).getTimeout();
+                redisCache.putIgnoreAggregate(syncKeys.getData(), element.getObjectValue(), timeout);
+                redisCache.putIgnoreAggregate(syncKeys.getVersion(), syncKeys.getVersionData().get(), timeout);
+            } else {
+                redisCache.putIgnoreAggregate(syncKeys.getData(), element.getObjectValue());
+                redisCache.putIgnoreAggregate(syncKeys.getVersion(), syncKeys.getVersionData().get());
+            }
         }
     }
 
@@ -115,16 +121,23 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
             ehcache.directEvict(syncKeys.getData());
         } else if (OpType.READ == opType || OpType.WRITE == opType) {
             //取缓存数据
-            final AgileCache redisCache = agileRedisCacheManager.getCache(syncKeys.getRegion());
+            final AgileRedis redisCache = agileRedisCacheManager.getCache(syncKeys.getRegion());
+            Long timeout = redisCache.getTimeout(syncKeys.getData());
+            if (timeout == 0 || timeout < -1) {
+                return;
+            }
+
             Cache.ValueWrapper valueWrapper = redisCache.get(syncKeys.getData());
 
             if (valueWrapper == null || valueWrapper.get() == null) {
                 return;
             }
 
-
-            ehcache.directPut(syncKeys.getData(), valueWrapper.get());
-
+            if (timeout > 0) {
+                ehcache.directPut(syncKeys.getData(), valueWrapper.get(), Duration.ofSeconds(timeout));
+            } else {
+                ehcache.directPut(syncKeys.getData(), valueWrapper.get());
+            }
             syncVersion(syncKeys);
         }
     }
@@ -149,7 +162,7 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
         final AgileCache redisCache = agileRedisCacheManager.getCache(channel);
 
         //提取缓存中的版本号
-        final SyncKeys syncKeys = keysByChannel(channel);
+        final SyncKeys syncKeys = SyncKeys.of(channel);
         final Integer cacheVersionData = redisCache.get(syncKeys.getVersion(), Integer.class);
         if (cacheVersionData == null) {
             //缓存中如果没有版本号，说明系统缓存数据被误删，不同步
@@ -208,10 +221,8 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
     }
 
     @Override
-    public <T> T sync(String region, String key, Supplier<T> supplier, OpType opType) {
+    public <T> T sync(SyncKeys syncKeys, Supplier<T> supplier, OpType opType) {
         T result = null;
-        SyncKeys syncKeys = keys(region, key);
-
         //自旋10次
         int count = 1200;
 
@@ -262,6 +273,50 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
         return result;
     }
 
+    @Override
+    public void sync(SyncKeys syncKeys, OpType opType) {
+        if (opType != OpType.WRITE && opType != OpType.DELETE) {
+            return;
+        }
+        //自旋10次
+        int count = 1200;
+
+        while (count > 0) {
+
+            switch (opType) {
+                case WRITE:
+                case DELETE:
+                    if (writeLock(syncKeys)) {
+                        try {
+                            //检查乐观锁
+                            checkCAS(syncKeys);
+
+                            //异步执行
+                            AsyncUtil.execute(() -> ehcacheToRedisAndNotice(syncKeys, opType));
+                            return;
+                        } catch (OptimisticLockCheckError e) {
+                            unlock(syncKeys.getWriteLock());
+                            throw e;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            unlock(syncKeys.getWriteLock());
+                        }
+                    }
+                    break;
+                default:
+            }
+
+            try {
+                //间隔两秒自旋
+                Thread.sleep(Duration.ofMillis(10).toMillis());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
+            }
+            count--;
+        }
+    }
+
     /**
      * 检查CAS情况
      *
@@ -271,7 +326,7 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
         int ehcacheVersion = syncKeys.getVersionData().get();
         if (ehcacheVersion == 0) {
             syncVersion(syncKeys);
-            ehcacheVersion = syncKeys.getVersionData().get();
+            return;
         }
 
         final AgileRedis redisCache = agileRedisCacheManager.getCache(syncKeys.getRegion());
@@ -287,7 +342,7 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
     public void clear(String region) {
         Ehcache ehcache = agileEhCacheCacheManager.getCache(region).getNativeCache();
         List keys = ehcache.getKeys();
-        keys.forEach(key -> sync(region, key.toString(), () -> null, OpType.DELETE));
+        keys.forEach(key -> sync(SyncKeys.of(region, key), () -> null, OpType.DELETE));
     }
 
     /**
@@ -312,7 +367,7 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
         }
         if (OpType.DELETE == opType) {
             //清除删除的缓存
-            remove(syncKeys);
+            SyncKeys.remove(syncKeys);
         }
     }
 
@@ -325,10 +380,7 @@ public class RedisSyncCache extends AbstractSyncCache implements MessageListener
     private boolean syncData(SyncKeys syncKeys) {
         if (readLock(syncKeys)) {
             try {
-                Element element = agileEhCacheCacheManager.getCache(syncKeys.getRegion()).getNativeCache().get(syncKeys.getData());
-                if (element == null || element.getObjectValue() == null) {
-                    redisToEhcache(syncKeys, OpType.READ);
-                }
+                redisToEhcache(syncKeys, OpType.READ);
             } catch (Exception e) {
                 e.printStackTrace();
                 return false;

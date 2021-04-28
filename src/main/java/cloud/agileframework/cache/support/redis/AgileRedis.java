@@ -1,7 +1,9 @@
 package cloud.agileframework.cache.support.redis;
 
 import cloud.agileframework.cache.support.AbstractAgileCache;
-import com.alibaba.fastjson.support.spring.GenericFastJsonRedisSerializer;
+import cloud.agileframework.common.util.clazz.ClassUtil;
+import cloud.agileframework.common.util.clazz.TypeReference;
+import cloud.agileframework.common.util.object.ObjectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.support.NullValue;
@@ -16,6 +18,7 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.types.Expiration;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.util.ByteUtils;
 import org.springframework.util.ObjectUtils;
@@ -38,7 +41,7 @@ import java.util.stream.Collectors;
 /**
  * @author 佟盟
  * 日期 2019/7/23 18:36
- * 描述 TODO
+ * 描述 Redis缓存扩展
  * @version 1.0
  * @since 1.0
  */
@@ -52,9 +55,9 @@ public class AgileRedis extends AbstractAgileCache {
     private final ConversionService conversionService;
     private final String name;
 
-    private final Duration sleepTime = Duration.ZERO;
+    private static final Duration SLEEP_TIME = Duration.ZERO;
 
-    private final static String TAG = UUID.randomUUID().toString();
+    private static final String TAG = UUID.randomUUID().toString();
 
     AgileRedis(RedisCache cache, RedisConnectionFactory redisConnectionFactory) {
         super(cache);
@@ -66,8 +69,8 @@ public class AgileRedis extends AbstractAgileCache {
 
     @Override
     public void put(Object key, Object value, Duration timeout) {
-        logger.info(String.format("操作:存%n区域：%s%nkey值：%s%nvalue值:%s%n", cache.getName(), key, value));
-        execute(name, connection -> connection.set(createAndConvertCacheKey(key), serializeCacheValue(value), Expiration.seconds(timeout.getSeconds()), RedisStringCommands.SetOption.UPSERT));
+        logger.info("操作:存\n区域：{}\nkey值：{}\nvalue值:{}\n", cache.getName(), key, value);
+        execute(name, connection -> connection.set(createAndConvertCacheKey(key), serializeCacheValue(value), Expiration.from(timeout), RedisStringCommands.SetOption.UPSERT));
     }
 
     @Override
@@ -77,7 +80,7 @@ public class AgileRedis extends AbstractAgileCache {
 
     @Override
     public void addToMap(Object mapKey, Object key, Object value) {
-        logger.info(String.format("操作:存%n区域：%s%nkey值：%s%nvalue值:%s%n", cache.getName(), key, value));
+        logger.info("操作:存\n区域：{}\nMap：{}\nkey值：{}\nvalue值:{}\n", cache.getName(), mapKey, key, value);
         executeConsumer(name, connection -> connection.hSet(createAndConvertCacheKey(mapKey), serializeCacheValue(key), serializeCacheValue(value)));
     }
 
@@ -94,22 +97,19 @@ public class AgileRedis extends AbstractAgileCache {
     @Override
     public <T> T getFromMap(Object mapKey, Object key, Class<T> clazz) {
         Object value = getFromMap(mapKey, key);
-        if (value != null && clazz != null && !clazz.isInstance(value)) {
-            throw new IllegalStateException(
-                    "Cached value is not of required type [" + clazz.getName() + "]: " + value);
-        }
-        return (T) value;
+
+        return ObjectUtil.to(value, new TypeReference<>(clazz));
     }
 
     @Override
     public void removeFromMap(Object mapKey, Object key) {
-        logger.info(String.format("操作:删除%n区域：%s%nkey值：%s%n", cache.getName(), key));
+        logger.info("操作:删\n区域：{}\nMap：{}\nkey值：{}\n", cache.getName(), mapKey, key);
         executeConsumer(name, connection -> connection.hDel(createAndConvertCacheKey(mapKey), serializeCacheValue(key)));
     }
 
     @Override
     public void addToList(Object listKey, Object node) {
-        logger.info(String.format("操作:存%n区域：%s%nkey值：%s%nvalue值:%s%n", cache.getName(), listKey, node));
+        logger.info("操作:存\n区域：{}\nList：{}\nvalue值:{}\n", cache.getName(), listKey, node);
         executeConsumer(name, connection -> connection.rPush(createAndConvertCacheKey(listKey), serializeCacheValue(node)));
     }
 
@@ -125,51 +125,41 @@ public class AgileRedis extends AbstractAgileCache {
     @Override
     public <T> T getFromList(Object listKey, int index, Class<T> clazz) {
         Object value = getFromList(listKey, index);
-        if (value != null && clazz != null && !clazz.isInstance(value)) {
-            throw new IllegalStateException(
-                    "Cached value is not of required type [" + clazz.getName() + "]: " + value);
-        }
-        return (T) value;
+        return ObjectUtil.to(value, new TypeReference<>(clazz));
     }
 
     @Override
     public void removeFromList(Object listKey, int index) {
-        logger.info(String.format("操作:删%n区域：%s%nkey值：%s%n", cache.getName(), listKey));
+        logger.info("操作:删\n区域：{}\nList：{}\nvalue值:{}\n", cache.getName(), listKey, index);
         executeConsumer(name, connection -> connection.lRem(createAndConvertCacheKey(listKey), 1, serializeCacheValue(getFromList(listKey, index))));
     }
 
     @Override
-    public void removeFromList0(Object listKey, Object o) {
-        logger.info(String.format("操作:删%n区域：%s%nkey值：%s%n", cache.getName(), listKey));
-        executeConsumer(name, connection -> connection.lRem(createAndConvertCacheKey(listKey), 0, serializeCacheValue(o)));
-    }
-
-    @Override
     public void addToSet(Object setKey, Object node) {
-        logger.info(String.format("操作:存%n区域：%s%nkey值：%s%nvalue值:%s%n", cache.getName(), setKey, node));
+        logger.info("操作:存\n区域：{}\nSet：{}\nvalue值:{}\n", cache.getName(), setKey, node);
         executeConsumer(name, connection -> connection.sAdd(createAndConvertCacheKey(setKey), serializeCacheValue(node)));
     }
 
     @Override
     public void removeFromSet(Object setKey, Object node) {
-        logger.info(String.format("操作:删%n区域：%s%nkey值：%s%n", cache.getName(), setKey));
+        logger.info("操作:删\n区域：{}\nSet：{}\nvalue值:{}\n", cache.getName(), setKey, node);
         executeConsumer(name, connection -> connection.sRem(createAndConvertCacheKey(setKey), serializeCacheValue(node)));
     }
 
     public synchronized boolean lock(Object lock, Object value) {
-        return execute(name, connection -> doLock(lock, value, connection));
+        return execute(name, connection -> connection.setNX(createAndConvertCacheKey(createCacheLockKey(lock)),
+                serializeCacheValue(value)));
     }
 
     public synchronized boolean lock(Object lock, Object value, Duration timeout) {
-        boolean isLock = execute(name, connection -> doLock(lock, value, connection));
-        if (isLock) {
-            execute(name, connection -> connection.expire(createAndConvertCacheKey(createCacheLockKey(lock)), timeout.getSeconds()));
-        }
-        return isLock;
+        return execute(name, connection -> connection.set(createAndConvertCacheKey(createCacheLockKey(lock)),
+                serializeCacheValue(value),
+                Expiration.from(timeout),
+                RedisStringCommands.SetOption.SET_IF_ABSENT));
     }
 
     /**
-     * 同进程下的同线程，不受锁限制
+     * 同进程下的同线程，不重复加锁
      *
      * @param lock 锁
      * @return 是否成功上锁
@@ -178,12 +168,15 @@ public class AgileRedis extends AbstractAgileCache {
         String value = getLock(lock, String.class);
         if (value != null && value.equals(getCurrentProcessAndThreadInfo())) {
             return true;
+        } else if (value == null) {
+            return lock(lock, getCurrentProcessAndThreadInfo());
+        } else {
+            return false;
         }
-        return execute(name, connection -> doLock(lock, getCurrentProcessAndThreadInfo(), connection));
     }
 
     /**
-     * 同进程下的同线程，不受锁限制
+     * 同进程下的同线程，更改过期时间
      *
      * @param lock    锁
      * @param timeout 过期
@@ -194,12 +187,11 @@ public class AgileRedis extends AbstractAgileCache {
         if (value != null && value.equals(getCurrentProcessAndThreadInfo())) {
             execute(name, connection -> connection.expire(createAndConvertCacheKey(createCacheLockKey(lock)), timeout.getSeconds()));
             return true;
+        } else if (value == null) {
+            return lock(lock, getCurrentProcessAndThreadInfo(), timeout);
+        } else {
+            return false;
         }
-        boolean isLock = execute(name, connection -> doLock(lock, getCurrentProcessAndThreadInfo(), connection));
-        if (isLock) {
-            execute(name, connection -> connection.expire(createAndConvertCacheKey(createCacheLockKey(lock)), timeout.getSeconds()));
-        }
-        return isLock;
     }
 
     /**
@@ -218,11 +210,22 @@ public class AgileRedis extends AbstractAgileCache {
 
     @Override
     public synchronized void unlock(Object lock) {
-        executeLockFree(connection -> doUnlock(lock, connection));
+        executeLockFree(connection -> connection.del(createAndConvertCacheKey(createCacheLockKey(lock))));
     }
 
+    /**
+     * 判断是否已经锁定
+     *
+     * @param lock 锁
+     * @return 如果是重入，则返回false，如果没有锁，也返回false，意味可以对资源加锁
+     */
     public synchronized boolean containLock(Object lock) {
-        return containKey(createCacheLockKey(lock));
+        String value = getLock(lock, String.class);
+        if (getCurrentProcessAndThreadInfo().equals(value) || value == null) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     @Override
@@ -296,7 +299,7 @@ public class AgileRedis extends AbstractAgileCache {
             } catch (Exception e) {
                 logger.debug("The attempt to use fastjson in the process of redis serialization failed", e);
             }
-        }else if(value == null){
+        } else if (value == null) {
             return fastJsonRedisSerializer.serialize(null);
         }
         return ByteUtils.getBytes(cacheConfig.getValueSerializationPair().write(value));
@@ -311,7 +314,7 @@ public class AgileRedis extends AbstractAgileCache {
         return tryDeserializeJsonCacheValue(value);
     }
 
-    private final MyGenericFastJsonRedisSerializer fastJsonRedisSerializer = new MyGenericFastJsonRedisSerializer();
+    private final GenericJackson2JsonRedisSerializer fastJsonRedisSerializer = new GenericJackson2JsonRedisSerializer();
 
     private Object tryDeserializeJsonCacheValue(byte[] value) {
         try {
@@ -338,7 +341,6 @@ public class AgileRedis extends AbstractAgileCache {
 
         RedisConnection connection = redisConnectionFactory.getConnection();
         try {
-
             checkAndPotentiallyWaitUntilUnlocked(name, connection);
             return callback.apply(connection);
         } finally {
@@ -367,7 +369,7 @@ public class AgileRedis extends AbstractAgileCache {
         try {
 
             while (doCheckLock(name, connection)) {
-                Thread.sleep(sleepTime.toMillis());
+                Thread.sleep(SLEEP_TIME.toMillis());
             }
         } catch (InterruptedException ex) {
 
@@ -380,7 +382,7 @@ public class AgileRedis extends AbstractAgileCache {
     }
 
     private boolean isLockingCacheWriter() {
-        return !sleepTime.isZero() && !sleepTime.isNegative();
+        return !SLEEP_TIME.isZero() && !SLEEP_TIME.isNegative();
     }
 
     private boolean doCheckLock(Object name, RedisConnection connection) {
@@ -395,17 +397,9 @@ public class AgileRedis extends AbstractAgileCache {
         return name.toString() + "~lock";
     }
 
-    private Boolean doLock(Object name, Object value, RedisConnection connection) {
-        return connection.setNX(createAndConvertCacheKey(createCacheLockKey(name)), serializeCacheValue(value));
-    }
-
     public <T> T getLock(Object lock, Class<T> clazz) {
         byte[] v = execute(name, connection -> connection.get(createAndConvertCacheKey(createCacheLockKey(lock))));
-        return (T) deserializeCacheValue(v);
-    }
-
-    private Long doUnlock(Object name, RedisConnection connection) {
-        return connection.del(createAndConvertCacheKey(createCacheLockKey(name)));
+        return ObjectUtil.to(deserializeCacheValue(v), new TypeReference<>(clazz));
     }
 
     private void executeLockFree(Consumer<RedisConnection> callback) {
@@ -429,9 +423,20 @@ public class AgileRedis extends AbstractAgileCache {
         execute(name, connection -> connection.set(createAndConvertCacheKey(key), serializeCacheValue(value)));
     }
 
+    /**
+     * 忽略集合处理直接存储
+     *
+     * @param key     key
+     * @param value   值
+     * @param timeout 过期
+     */
+    public void putIgnoreAggregate(Object key, Object value, Duration timeout) {
+        execute(name, connection -> connection.set(createAndConvertCacheKey(key), serializeCacheValue(value), Expiration.from(timeout), RedisStringCommands.SetOption.UPSERT));
+    }
+
     @Override
     public void put(Object key, Object value) {
-        logger.info(String.format("操作:存%n区域：%s%nkey值：%s%nvalue值：%s%n", cache.getName(), key, value));
+        logger.info("操作:存\n区域：{}\nkey值：{}\nvalue值：{}\n", cache.getName(), key, value);
         if (Map.class.isAssignableFrom(value.getClass())) {
             evict(key);
             Map<byte[], byte[]> map = new HashMap<>(((Map<?, ?>) value).size());
@@ -465,22 +470,31 @@ public class AgileRedis extends AbstractAgileCache {
 
     @Override
     public <T> T get(Object key, Class<T> clazz) {
-        logger.info(String.format("操作:取%n区域：%s%nkey值：%s%n", cache.getName(), key));
+        return get(key, new TypeReference<>(clazz));
+    }
+
+    @Override
+    public <T> T get(Object key, TypeReference<T> typeReference) {
+        logger.info("操作:取\n区域：{}\nkey值：{}\n", cache.getName(), key);
+        Class<?> clazz = ClassUtil.getWrapper(typeReference.getType());
+
+        Object data;
         if (Map.class.isAssignableFrom(clazz)) {
             Map<byte[], byte[]> map = execute(name, connection -> connection.hGetAll(createAndConvertCacheKey(key)));
             HashMap<Object, Object> res = new HashMap<>(map.size());
             map.forEach((k, v) -> res.put(deserializeCacheValue(k), deserializeCacheValue(v)));
-            return (T) res;
+            data = res;
         } else if (List.class.isAssignableFrom(clazz)) {
             List<byte[]> list = execute(name, connection -> connection.lRange(createAndConvertCacheKey(key), 0, -1));
-            return (T) list.stream().map(this::deserializeCacheValue).collect(Collectors.toList());
+            data = list.stream().map(this::deserializeCacheValue).collect(Collectors.toList());
         } else if (Set.class.isAssignableFrom(clazz)) {
             Set<byte[]> set = execute(name, connection -> connection.sMembers(createAndConvertCacheKey(key)));
-            return (T) set.stream().map(this::deserializeCacheValue).collect(Collectors.toSet());
+            data = set.stream().map(this::deserializeCacheValue).collect(Collectors.toSet());
         } else {
             byte[] v = execute(name, connection -> connection.get(createAndConvertCacheKey(key)));
-            return (T) deserializeCacheValue(v);
+            data = deserializeCacheValue(v);
         }
+        return ObjectUtil.to(data, new TypeReference<>(clazz));
     }
 
     @Override
@@ -489,8 +503,18 @@ public class AgileRedis extends AbstractAgileCache {
         return new SimpleValueWrapper(deserializeCacheValue(v));
     }
 
+    /**
+     * 获取key的过期时间
+     *
+     * @param key key
+     * @return 秒
+     */
+    public Long getTimeout(Object key) {
+        return execute(name, connection -> connection.ttl(createAndConvertCacheKey(key)));
+    }
+
     @Override
-    public Object getNativeCache() {
+    public RedisConnection getNativeCache() {
         return redisConnectionFactory.getConnection();
     }
 

@@ -2,13 +2,18 @@ package cloud.agileframework.cache.config;
 
 import cloud.agileframework.cache.properties.EhCacheProperties;
 import cloud.agileframework.cache.support.ehcache.AgileEhCacheCacheManager;
+import cloud.agileframework.cache.support.ehcache.SyncCacheEventListener;
 import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
 import cloud.agileframework.cache.sync.RedisSyncCache;
 import cloud.agileframework.cache.sync.SyncCache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.DiskStoreConfiguration;
+import net.sf.ehcache.event.CacheEventListener;
+import net.sf.ehcache.event.CacheEventListenerAdapter;
+import net.sf.ehcache.event.CacheEventListenerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -17,8 +22,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * @author 佟盟 on 2017/10/8
@@ -33,8 +40,9 @@ public class EhCacheAutoConfiguration implements CacheAutoConfiguration {
     private EhCacheProperties ehCacheProperties;
 
     @Bean
-    public AgileEhCacheCacheManager agileEhCacheCacheManager() {
-        return new AgileEhCacheCacheManager(ehCacheCacheManager());
+    @Primary
+    public AgileEhCacheCacheManager agileEhCacheCacheManager(CacheManager ehCacheCacheManager) {
+        return new AgileEhCacheCacheManager(ehCacheCacheManager);
     }
 
     @Bean
@@ -64,6 +72,7 @@ public class EhCacheAutoConfiguration implements CacheAutoConfiguration {
                 configuration.cache(regionConfig);
             }
         }
+
         return configuration;
     }
 
@@ -74,14 +83,24 @@ public class EhCacheAutoConfiguration implements CacheAutoConfiguration {
      */
     @Bean
     @ConditionalOnBean(AgileRedisCacheManager.class)
+    @ConditionalOnProperty(name = "sync", prefix = "spring.ehcache")
     public RedisSyncCache syncCache() {
         return new RedisSyncCache();
     }
 
     @Bean
-    @ConditionalOnMissingBean(AgileRedisCacheManager.class)
+    @ConditionalOnMissingBean(SyncCache.class)
     public SyncCache syncCacheDefault() {
         return new SyncCache() {
         };
+    }
+
+    /**
+     * 事件监听器
+     * @return 事件监听
+     */
+    @Bean
+    public SyncCacheEventListener syncCacheEventListener(){
+        return new SyncCacheEventListener();
     }
 }
