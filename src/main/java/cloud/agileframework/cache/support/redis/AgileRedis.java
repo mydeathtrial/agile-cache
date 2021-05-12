@@ -4,6 +4,7 @@ import cloud.agileframework.cache.support.AbstractAgileCache;
 import cloud.agileframework.common.util.clazz.ClassUtil;
 import cloud.agileframework.common.util.clazz.TypeReference;
 import cloud.agileframework.common.util.object.ObjectUtil;
+import cloud.agileframework.spring.util.BeanUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.support.NullValue;
@@ -18,7 +19,6 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.types.Expiration;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.util.ByteUtils;
 import org.springframework.util.ObjectUtils;
@@ -31,7 +31,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -58,6 +57,10 @@ public class AgileRedis extends AbstractAgileCache {
     private static final Duration SLEEP_TIME = Duration.ZERO;
 
     private static final String TAG = UUID.randomUUID().toString();
+    /**
+     * 存储数据的序列化工具
+     */
+    private final SecondCacheSerializerProvider redisSerializer = BeanUtil.getApplicationContext().getBean(SecondCacheSerializerProvider.class);
 
     AgileRedis(RedisCache cache, RedisConnectionFactory redisConnectionFactory) {
         super(cache);
@@ -283,26 +286,7 @@ public class AgileRedis extends AbstractAgileCache {
             return BINARY_NULL_VALUE;
         }
 
-        return trySerializeJsonCacheValue(value);
-    }
-
-    private byte[] trySerializeJsonCacheValue(Object value) {
-        if (value != null && fastJsonRedisSerializer.canSerialize(value.getClass())) {
-            try {
-                //如果可以正反序列化，则使用json
-                byte[] a = fastJsonRedisSerializer.serialize(value);
-                Object b = fastJsonRedisSerializer.deserialize(a);
-
-                if (Objects.equals(value, b)) {
-                    return a;
-                }
-            } catch (Exception e) {
-                logger.debug("The attempt to use fastjson in the process of redis serialization failed", e);
-            }
-        } else if (value == null) {
-            return fastJsonRedisSerializer.serialize(null);
-        }
-        return ByteUtils.getBytes(cacheConfig.getValueSerializationPair().write(value));
+        return redisSerializer.serialize(value);
     }
 
     protected Object deserializeCacheValue(byte[] value) {
@@ -311,17 +295,7 @@ public class AgileRedis extends AbstractAgileCache {
             return NullValue.INSTANCE;
         }
 
-        return tryDeserializeJsonCacheValue(value);
-    }
-
-    private final GenericJackson2JsonRedisSerializer fastJsonRedisSerializer = new GenericJackson2JsonRedisSerializer();
-
-    private Object tryDeserializeJsonCacheValue(byte[] value) {
-        try {
-            return cacheConfig.getValueSerializationPair().read(ByteBuffer.wrap(value));
-        } catch (Exception e) {
-            return fastJsonRedisSerializer.deserialize(value);
-        }
+        return redisSerializer.deserialize(value);
     }
 
     protected Object deserializeCacheKey(byte[] value) {

@@ -87,13 +87,16 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
             <optional>true</optional>
         </dependency>
-
+        <!--json-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-json</artifactId>
+        </dependency>
         <!--#hibernate二级缓存-->
         <dependency>
             <groupId>org.hibernate</groupId>
