@@ -242,8 +242,6 @@ public class RedisSyncCache implements MessageListener, SyncCache {
                 case DELETE:
                     if (writeLock(syncKeys)) {
                         try {
-                            //检查乐观锁
-                            checkCAS(syncKeys);
                             //某操作
                             result = supplier.get();
                             //异步执行
@@ -288,9 +286,6 @@ public class RedisSyncCache implements MessageListener, SyncCache {
                 case DELETE:
                     if (writeLock(syncKeys)) {
                         try {
-                            //检查乐观锁
-                            checkCAS(syncKeys);
-
                             //异步执行
                             AsyncUtil.execute(() -> ehcacheToRedisAndNotice(syncKeys, opType));
                             return;
@@ -314,27 +309,6 @@ public class RedisSyncCache implements MessageListener, SyncCache {
                 Thread.currentThread().interrupt();
             }
             count--;
-        }
-    }
-
-    /**
-     * 检查CAS情况
-     *
-     * @param syncKeys key信息
-     */
-    private void checkCAS(SyncKeys syncKeys) throws OptimisticLockCheckError {
-        int ehcacheVersion = syncKeys.getVersionData().get();
-        if (ehcacheVersion == 0) {
-            syncVersion(syncKeys);
-            return;
-        }
-
-        final AgileRedis redisCache = agileRedisCacheManager.getCache(syncKeys.getRegion());
-        final Integer redisVersion = redisCache.get(syncKeys.getVersion(), int.class);
-
-        boolean noChange = redisVersion == null || redisVersion <= ehcacheVersion;
-        if (!noChange) {
-            throw new OptimisticLockCheckError("redis version is illegal");
         }
     }
 
