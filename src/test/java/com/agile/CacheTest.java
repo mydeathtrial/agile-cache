@@ -62,7 +62,7 @@ public class CacheTest implements Serializable {
     }
 
     @Test
-    public void evict() {
+    public void evict() throws IOException {
         String key = "evict";
         CacheUtil.put(key, "1");
         CacheUtil.evict(key);
@@ -83,7 +83,7 @@ public class CacheTest implements Serializable {
     }
 
     @Test
-    public void set() {
+    public void set() throws IOException {
         HashSet<Object> set = new HashSet<>();
         set.add("1");
         final String setKey = "set";
@@ -223,6 +223,7 @@ public class CacheTest implements Serializable {
         CacheUtil.put(testKey, s);
         s.setA("2");
 
+        CacheUtil.containKey(testKey);
         Assert.assertEquals(CacheUtil.get(testKey, Demo.class).getA(), "1");
     }
 

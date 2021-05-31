@@ -42,6 +42,21 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     @Override
+    public boolean evictIfPresent(Object key) {
+        return super.evictIfPresent(TransmitKey.of(key));
+    }
+
+    @Override
+    public ValueWrapper putIfAbsent(Object key, Object value) {
+        return super.putIfAbsent(TransmitKey.of(key), value);
+    }
+
+    @Override
+    public void evict(Object key) {
+        super.evict(TransmitKey.of(key));
+    }
+
+    @Override
     public Ehcache getNativeCache() {
         return nativeCache;
     }
@@ -53,7 +68,7 @@ public class AgileEhCache extends AbstractAgileCache {
     @Override
     public <T> T get(Object key, Class<T> clazz) {
         return syncCache().sync(SyncKeys.of(getName(), key), () -> {
-            ValueWrapper v = super.get(key);
+            ValueWrapper v = super.get(TransmitKey.of(key));
             if (v == null) {
                 return null;
             }
@@ -69,18 +84,18 @@ public class AgileEhCache extends AbstractAgileCache {
 
     @Override
     public ValueWrapper get(Object key) {
-        return syncCache().sync(SyncKeys.of(getName(), key), () -> super.get(key), OpType.READ);
+        return syncCache().sync(SyncKeys.of(getName(), key), () -> super.get(TransmitKey.of(key)), OpType.READ);
     }
 
     @Override
     public <T> T get(Object key, Callable<T> valueLoader) {
-        return syncCache().sync(SyncKeys.of(getName(), key), () -> super.get(key, valueLoader), OpType.READ);
+        return syncCache().sync(SyncKeys.of(getName(), key), () -> super.get(TransmitKey.of(key), valueLoader), OpType.READ);
     }
 
     @Override
     public <T> T get(Object key, TypeReference<T> typeReference) {
         return syncCache().sync(SyncKeys.of(getName(), key), () -> {
-            ValueWrapper wrapper = super.get(key);
+            ValueWrapper wrapper = super.get(TransmitKey.of(key));
             if (wrapper != null) {
                 Object v = wrapper.get();
                 return ObjectUtil.to(v, typeReference);
@@ -91,17 +106,17 @@ public class AgileEhCache extends AbstractAgileCache {
 
     @Override
     public void put(Object key, Object value, Duration timeout) {
-        directPut(key, value, timeout);
+        directPut(TransmitKey.of(key), value, timeout);
     }
 
     @Override
     public void put(Object key, Object value) {
-        directPut(key, value);
+        directPut(TransmitKey.of(key), value);
     }
 
     @Override
     public boolean containKey(Object key) {
-        return syncCache().sync(SyncKeys.of(getName(), key), () -> nativeCache.isKeyInCache(key), OpType.READ);
+        return syncCache().sync(SyncKeys.of(getName(), key), () -> nativeCache.isKeyInCache(TransmitKey.of(key)), OpType.READ);
     }
 
     @Override
@@ -196,7 +211,7 @@ public class AgileEhCache extends AbstractAgileCache {
     public synchronized boolean lock(Object lock) {
         boolean isLock;
         try {
-            isLock = nativeCache.tryWriteLockOnKey(lock, 1);
+            isLock = nativeCache.tryWriteLockOnKey(TransmitKey.of(lock), 1);
         } catch (InterruptedException e) {
             isLock = false;
             Thread.currentThread().interrupt();
@@ -207,7 +222,7 @@ public class AgileEhCache extends AbstractAgileCache {
 
     @Override
     public void unlock(Object lock) {
-        nativeCache.releaseWriteLockOnKey(lock);
+        nativeCache.releaseWriteLockOnKey(TransmitKey.of(lock));
     }
 
     private static final AntPathMatcher ANT = new AntPathMatcher();
@@ -218,7 +233,12 @@ public class AgileEhCache extends AbstractAgileCache {
             final String pattern = String.valueOf(key);
             List<Object> keys = nativeCache.getKeys();
             return keys.stream()
-                    .map(String::valueOf)
+                    .map(a->{
+                        if(a instanceof TransmitKey){
+                            return ObjectUtil.toString(((TransmitKey) a).getKey());
+                        }
+                        return ObjectUtil.toString(a);
+                    })
                     .filter(b -> ANT.match(pattern, b))
                     .collect(Collectors.toList());
         }, OpType.READ);
@@ -226,6 +246,9 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     public void directPut(Object key, Object value, Duration timeout) {
+        if(!(key instanceof TransmitKey)){
+            key = TransmitKey.of(key, false);
+        }
         Element element = new Element(key, SerializationUtils.clone((Serializable) value));
         element.setTimeToLive(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()), Integer.class));
         element.setTimeToIdle(NumberUtils.parseNumber(Long.toString(timeout.getSeconds()), Integer.class));
@@ -240,6 +263,9 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     public void directPut(Object key, Object value) {
+        if(!(key instanceof TransmitKey)){
+            key = TransmitKey.of(key, false);
+        }
         //内存缓存保留28~32分钟之间的随机值，防止穿透，
         long randomRange = RandomUtils.nextLong(1680000, 1920000);
         final Duration timeout = Duration.ofMillis(randomRange);
@@ -257,11 +283,14 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     public void directEvict(Object key) {
+        if(!(key instanceof TransmitKey)){
+            key = TransmitKey.of(key, false);
+        }
         super.evict(key);
     }
 
     private Map<Object, Object> directGetMap(Object mapKey) {
-        Element value = nativeCache.get(mapKey);
+        Element value = nativeCache.get(TransmitKey.of(mapKey));
 
         if (value == null) {
             return Maps.newHashMapWithExpectedSize(16);
@@ -275,7 +304,7 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     private List<Object> directGetList(Object listKey) {
-        Element value = nativeCache.get(listKey);
+        Element value = nativeCache.get(TransmitKey.of(listKey));
         if (value == null) {
             return Collections.emptyList();
         }
@@ -287,7 +316,7 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     private Set<Object> directGetSet(Object setKey) {
-        Element value = nativeCache.get(setKey);
+        Element value = nativeCache.get(TransmitKey.of(setKey));
         if (value == null) {
             return Collections.emptySet();
         }

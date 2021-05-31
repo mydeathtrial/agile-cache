@@ -28,30 +28,54 @@ public class SyncCacheEventListener extends CacheEventListenerAdapter {
         this.syncCache = syncCache;
     }
 
+    private boolean needSync(Element element) {
+        Object key = element.getObjectKey();
+        return keyNeedSync(key);
+    }
+
+    private boolean keyNeedSync(Object key) {
+        return !(key instanceof TransmitKey) || !((TransmitKey) key).isTransmit();
+    }
+
     @Override
     public void notifyElementRemoved(Ehcache cache, Element element) throws CacheException {
+        if (needSync(element)) {
+            return;
+        }
         syncCache.sync(getSyncKeys(cache, element), OpType.DELETE);
     }
 
     @Override
     public void notifyElementPut(Ehcache cache, Element element) throws CacheException {
+        if (needSync(element)) {
+            return;
+        }
         syncCache.sync(getSyncKeys(cache, element), OpType.WRITE);
     }
 
     @Override
     public void notifyElementUpdated(Ehcache cache, Element element) throws CacheException {
+        if (needSync(element)) {
+            return;
+        }
         syncCache.sync(getSyncKeys(cache, element), OpType.WRITE);
     }
 
     @Override
     public void notifyElementEvicted(Ehcache cache, Element element) {
+        if (needSync(element)) {
+            return;
+        }
         syncCache.sync(getSyncKeys(cache, element), OpType.DELETE);
     }
 
     @Override
     public void notifyRemoveAll(Ehcache cache) {
-        List keys = cache.getKeys();
+        List<?> keys = cache.getKeys();
         for (Object key : keys) {
+            if (keyNeedSync(key)) {
+                return;
+            }
             syncCache.sync(SyncKeys.of(cache.getName(), key), OpType.DELETE);
         }
     }

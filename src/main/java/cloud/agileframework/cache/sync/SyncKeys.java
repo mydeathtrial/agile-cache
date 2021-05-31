@@ -1,5 +1,6 @@
 package cloud.agileframework.cache.sync;
 
+import cloud.agileframework.cache.support.ehcache.TransmitKey;
 import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -86,6 +87,9 @@ public class SyncKeys {
      * @return 缓存同步所需的key值集合
      */
     public static synchronized SyncKeys of(String region, Object key) {
+        if(key instanceof TransmitKey){
+            key = ((TransmitKey) key).getKey();
+        }
         String keyString = key.toString();
         String id = region + keyString;
 

@@ -3,6 +3,7 @@ package cloud.agileframework.cache.sync;
 import cloud.agileframework.cache.support.AgileCache;
 import cloud.agileframework.cache.support.ehcache.AgileEhCache;
 import cloud.agileframework.cache.support.ehcache.AgileEhCacheCacheManager;
+import cloud.agileframework.cache.support.ehcache.TransmitKey;
 import cloud.agileframework.cache.support.redis.AgileRedis;
 import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
 import cloud.agileframework.spring.util.AsyncUtil;
@@ -91,7 +92,7 @@ public class RedisSyncCache implements MessageListener, SyncCache {
             redisCache.evict(syncKeys.getData());
             redisCache.evict(syncKeys.getVersion());
         } else if (OpType.WRITE == opType) {
-            Element element = agileEhCacheCacheManager.getCache(syncKeys.getRegion()).getNativeCache().get(syncKeys.getData());
+            Element element = agileEhCacheCacheManager.getCache(syncKeys.getRegion()).getNativeCache().get(TransmitKey.of(syncKeys.getData()));
             if (element == null || element.getObjectValue() == null) {
                 return;
             }
@@ -315,7 +316,7 @@ public class RedisSyncCache implements MessageListener, SyncCache {
     @Override
     public void clear(String region) {
         Ehcache ehcache = agileEhCacheCacheManager.getCache(region).getNativeCache();
-        List keys = ehcache.getKeys();
+        List<?> keys = ehcache.getKeys();
         keys.forEach(key -> sync(SyncKeys.of(region, key), () -> null, OpType.DELETE));
     }
 
