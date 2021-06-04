@@ -99,13 +99,13 @@ public class RedisSyncCache implements MessageListener, SyncCache {
 
             //升级版本号
             syncKeys.getVersionData().addAndGet(1);
-            if (syncKeys instanceof SyncKeys.SyncKeysWithTimeout) {
-                final Duration timeout = ((SyncKeys.SyncKeysWithTimeout) syncKeys).getTimeout();
-                redisCache.putIgnoreAggregate(syncKeys.getData(), element.getObjectValue(), timeout);
-                redisCache.putIgnoreAggregate(syncKeys.getVersion(), syncKeys.getVersionData().get(), timeout);
-            } else {
+            if (syncKeys.getTimeout().isZero()) {
                 redisCache.putIgnoreAggregate(syncKeys.getData(), element.getObjectValue());
                 redisCache.putIgnoreAggregate(syncKeys.getVersion(), syncKeys.getVersionData().get());
+            } else {
+                final Duration timeout = syncKeys.getTimeout();
+                redisCache.putIgnoreAggregate(syncKeys.getData(), element.getObjectValue(), timeout);
+                redisCache.putIgnoreAggregate(syncKeys.getVersion(), syncKeys.getVersionData().get(), timeout);
             }
         }
     }

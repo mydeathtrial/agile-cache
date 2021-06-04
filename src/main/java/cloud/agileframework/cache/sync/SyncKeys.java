@@ -5,10 +5,7 @@ import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
-import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
 import java.util.Map;
@@ -76,6 +73,8 @@ public class SyncKeys {
      */
     private String writeLock;
 
+    private Duration timeout;
+
     private SyncKeys() {
     }
 
@@ -87,7 +86,7 @@ public class SyncKeys {
      * @return 缓存同步所需的key值集合
      */
     public static synchronized SyncKeys of(String region, Object key) {
-        if(key instanceof TransmitKey){
+        if (key instanceof TransmitKey) {
             key = ((TransmitKey) key).getKey();
         }
         String keyString = key.toString();
@@ -104,34 +103,14 @@ public class SyncKeys {
             return syncKeys;
         });
 
+        v.setTimeout(Duration.ZERO);
         CHANNEL_KEY_INFO.putIfAbsent(v.getChannel(), v);
         return v;
     }
 
     public static synchronized SyncKeys of(String region, Object key, Duration timeout) {
-        String keyString = key.toString();
-        String id = region + keyString;
-
-        SyncKeys v = KEY_INFO.computeIfAbsent(id, k -> {
-            SyncKeys syncKeys;
-            if (timeout.equals(Duration.ZERO)) {
-                syncKeys = SyncKeys.builder().data(keyString).region(region).id(k).build();
-            } else {
-                syncKeys = new SyncKeysWithTimeout(timeout);
-                syncKeys.setData(keyString);
-                syncKeys.setRegion(region);
-            }
-
-            syncKeys.setChannel(k + "_channel");
-            syncKeys.setVersion(k + "_version");
-            syncKeys.setReadLock(k + "_readLock");
-            syncKeys.setWriteLock(k + "_writeLock");
-
-
-            return syncKeys;
-        });
-
-        CHANNEL_KEY_INFO.putIfAbsent(v.getChannel(), v);
+        SyncKeys v = of(region, key);
+        v.setTimeout(timeout);
         return v;
     }
 
@@ -153,21 +132,5 @@ public class SyncKeys {
     public static void remove(SyncKeys syncKeys) {
         KEY_INFO.remove(syncKeys.getRegion() + syncKeys.getData());
         CHANNEL_KEY_INFO.remove(syncKeys.getRegion() + syncKeys.getChannel());
-    }
-
-    public static class SyncKeysWithTimeout extends SyncKeys {
-        private Duration timeout;
-
-        public SyncKeysWithTimeout(Duration timeout) {
-            this.timeout = timeout;
-        }
-
-        public Duration getTimeout() {
-            return timeout;
-        }
-
-        public void setTimeout(Duration timeout) {
-            this.timeout = timeout;
-        }
     }
 }
