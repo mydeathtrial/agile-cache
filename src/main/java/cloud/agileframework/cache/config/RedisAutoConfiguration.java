@@ -13,6 +13,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * @author 佟盟
  * 日期 2020/8/00010 15:03
@@ -43,16 +46,8 @@ public class RedisAutoConfiguration implements CacheAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(SecondCacheSerializerProvider.class)
     public SecondCacheSerializerProvider secondCacheSerializerProvider(ObjectProvider<Module> moduleObjectProvider) {
-        return new GenericRedisSerializer(moduleObjectProvider);
-    }
-
-    /**
-     * 自定义jackson2的序列化类型
-     *
-     * @return 自定义jackson2的序列化类型模块
-     */
-    @Bean
-    public CustomJackson2Module customJackson2Module() {
-        return new CustomJackson2Module();
+        List<Module> list = moduleObjectProvider.orderedStream().collect(Collectors.toList());
+        list.add(new CustomJackson2Module());
+        return new GenericRedisSerializer(list);
     }
 }

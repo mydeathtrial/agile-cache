@@ -8,27 +8,16 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.deser.std.DateDeserializers;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.List;
 
 /**
  * @author 佟盟
@@ -45,7 +34,7 @@ public class GenericRedisSerializer implements RedisSerializer<Object>, SecondCa
     private final GenericJackson2JsonRedisSerializer JACKSON2_JSON_REDIS_SERIALIZER;
     private final JdkSerializationRedisSerializer JDK_SERIALIZATION_REDIS_SERIALIZER = new JdkSerializationRedisSerializer();
 
-    public GenericRedisSerializer(ObjectProvider<Module> moduleObjectProvider) {
+    public GenericRedisSerializer(List<Module> moduleObjectProvider) {
         DEFAULT_REDIS_CONFIG.setAutoTypeSupport(true);
         DEFAULT_REDIS_CONFIG.setJacksonCompatible(true);
         DEFAULT_REDIS_CONFIG.putDeserializer(java.util.Date.class, MyDateCodec.instance);
