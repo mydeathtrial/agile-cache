@@ -233,8 +233,8 @@ public class AgileEhCache extends AbstractAgileCache {
             final String pattern = String.valueOf(key);
             List<Object> keys = nativeCache.getKeys();
             return keys.stream()
-                    .map(a->{
-                        if(a instanceof TransmitKey){
+                    .map(a -> {
+                        if (a instanceof TransmitKey) {
                             return ObjectUtil.toString(((TransmitKey) a).getKey());
                         }
                         return ObjectUtil.toString(a);
@@ -246,7 +246,7 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     public void directPut(Object key, Object value, Duration timeout) {
-        if(!(key instanceof TransmitKey)){
+        if (!(key instanceof TransmitKey)) {
             key = TransmitKey.of(key, false);
         }
         Element element = new Element(key, SerializationUtils.clone((Serializable) value));
@@ -263,7 +263,7 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     public void directPut(Object key, Object value) {
-        if(!(key instanceof TransmitKey)){
+        if (!(key instanceof TransmitKey)) {
             key = TransmitKey.of(key, false);
         }
         //内存缓存保留28~32分钟之间的随机值，防止穿透，
@@ -283,47 +283,35 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     public void directEvict(Object key) {
-        if(!(key instanceof TransmitKey)){
+        if (!(key instanceof TransmitKey)) {
             key = TransmitKey.of(key, false);
         }
         super.evict(key);
     }
 
     private Map<Object, Object> directGetMap(Object mapKey) {
-        Element value = nativeCache.get(TransmitKey.of(mapKey));
+        Map<Object, Object> map = get(mapKey, Map.class);
 
-        if (value == null) {
+        if (map == null) {
             return Maps.newHashMapWithExpectedSize(16);
         }
-        Object map = value.getObjectValue();
-        if (!Map.class.isAssignableFrom(map.getClass())) {
-            throw CACHE_EXCEPTION;
-        }
 
-        return (Map<Object, Object>) map;
+        return map;
     }
 
     private List<Object> directGetList(Object listKey) {
-        Element value = nativeCache.get(TransmitKey.of(listKey));
-        if (value == null) {
+        List<Object> list = get(listKey, List.class);
+        if (list == null) {
             return Collections.emptyList();
         }
-        Object list = value.getObjectValue();
-        if (!List.class.isAssignableFrom(list.getClass())) {
-            throw CACHE_EXCEPTION;
-        }
-        return (List) list;
+        return list;
     }
 
     private Set<Object> directGetSet(Object setKey) {
-        Element value = nativeCache.get(TransmitKey.of(setKey));
-        if (value == null) {
+        Set<Object> set = get(setKey, Set.class);
+        if (set == null) {
             return Collections.emptySet();
         }
-        Object map = value.getObjectValue();
-        if (!Set.class.isAssignableFrom(map.getClass())) {
-            throw CACHE_EXCEPTION;
-        }
-        return (Set) map;
+        return set;
     }
 }
