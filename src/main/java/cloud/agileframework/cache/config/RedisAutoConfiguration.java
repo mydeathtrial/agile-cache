@@ -3,6 +3,7 @@ package cloud.agileframework.cache.config;
 import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
 import cloud.agileframework.cache.support.redis.CustomJackson2Module;
 import cloud.agileframework.cache.support.redis.GenericRedisSerializer;
+import cloud.agileframework.cache.support.redis.Jackson2ModuleProvider;
 import cloud.agileframework.cache.support.redis.SecondCacheSerializerProvider;
 import com.fasterxml.jackson.databind.Module;
 import org.springframework.beans.factory.ObjectProvider;
@@ -45,9 +46,23 @@ public class RedisAutoConfiguration implements CacheAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean(SecondCacheSerializerProvider.class)
-    public SecondCacheSerializerProvider secondCacheSerializerProvider(ObjectProvider<Module> moduleObjectProvider) {
-        List<Module> list = moduleObjectProvider.orderedStream().collect(Collectors.toList());
-        list.add(new CustomJackson2Module());
+    public SecondCacheSerializerProvider secondCacheSerializerProvider(ObjectProvider<Jackson2ModuleProvider> jackson2ModuleProviders) {
+        List<Module> list = jackson2ModuleProviders.orderedStream().flatMap(a -> {
+            if (a.module() != null) {
+                a.modules().add(a.module());
+            }
+            return a.modules().stream();
+        }).collect(Collectors.toList());
         return new GenericRedisSerializer(list);
+    }
+
+    @Bean
+    Jackson2ModuleProvider customJackson2ModuleProvider() {
+        return new Jackson2ModuleProvider() {
+            @Override
+            public Module module() {
+                return new CustomJackson2Module();
+            }
+        };
     }
 }
