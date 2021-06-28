@@ -123,7 +123,7 @@ public class AgileEhCache extends AbstractAgileCache {
     public void addToMap(Object mapKey, Object key, Object value) {
         Map<Object, Object> map = directGetMap(mapKey);
         map.put(key, value);
-        directPut(mapKey, map);
+        directPut(TransmitKey.of(mapKey), map);
     }
 
     @Override
@@ -148,7 +148,7 @@ public class AgileEhCache extends AbstractAgileCache {
         Map<Object, Object> map = directGetMap(mapKey);
         if (map.containsKey(key)) {
             map.remove(key);
-            directPut(mapKey, map);
+            directPut(TransmitKey.of(mapKey), map);
         }
     }
 
@@ -156,7 +156,7 @@ public class AgileEhCache extends AbstractAgileCache {
     public void addToList(Object listKey, Object node) {
         List<Object> list = directGetList(listKey);
         list.add(node);
-        directPut(listKey, list);
+        directPut(TransmitKey.of(listKey), list);
     }
 
     @Override
@@ -188,7 +188,7 @@ public class AgileEhCache extends AbstractAgileCache {
         List<Object> list = directGetList(listKey);
         if (list.size() >= index) {
             list.remove(index);
-            directPut(listKey, list);
+            directPut(TransmitKey.of(listKey), list);
         }
     }
 
@@ -196,14 +196,14 @@ public class AgileEhCache extends AbstractAgileCache {
     public void addToSet(Object setKey, Object node) {
         Set<Object> set = directGetSet(setKey);
         set.add(node);
-        directPut(setKey, set);
+        directPut(TransmitKey.of(setKey), set);
     }
 
     @Override
     public void removeFromSet(Object setKey, Object node) {
         Set<Object> set = directGetSet(setKey);
         if (set.remove(node)) {
-            directPut(setKey, set);
+            directPut(TransmitKey.of(setKey), set);
         }
     }
 
