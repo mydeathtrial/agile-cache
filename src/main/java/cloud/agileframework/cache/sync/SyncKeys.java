@@ -94,11 +94,10 @@ public class SyncKeys {
 
         SyncKeys v = KEY_INFO.computeIfAbsent(id, k -> {
             SyncKeys syncKeys = SyncKeys.builder().data(keyString).region(region).id(k).build();
-            syncKeys.setChannel(k + "_channel");
-            syncKeys.setVersion(k + "_version");
-            syncKeys.setReadLock(k + "_readLock");
-            syncKeys.setWriteLock(k + "_writeLock");
-
+            syncKeys.setChannel(id + "_channel");
+            syncKeys.setVersion(keyString + "_version");
+            syncKeys.setReadLock(id + "_readLock");
+            syncKeys.setWriteLock(id + "_writeLock");
 
             return syncKeys;
         });
@@ -130,7 +129,7 @@ public class SyncKeys {
     }
 
     public static void remove(SyncKeys syncKeys) {
-        KEY_INFO.remove(syncKeys.getRegion() + syncKeys.getData());
-        CHANNEL_KEY_INFO.remove(syncKeys.getRegion() + syncKeys.getChannel());
+        KEY_INFO.remove(syncKeys.getId());
+        CHANNEL_KEY_INFO.remove(syncKeys.getChannel());
     }
 }
