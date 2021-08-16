@@ -1,11 +1,9 @@
 package cloud.agileframework.cache.config;
 
 import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
-import cloud.agileframework.cache.support.redis.CustomJackson2Module;
-import cloud.agileframework.cache.support.redis.GenericRedisSerializer;
+import cloud.agileframework.cache.support.redis.GenericFstRedisSerializer;
 import cloud.agileframework.cache.support.redis.Jackson2ModuleProvider;
 import cloud.agileframework.cache.support.redis.SecondCacheSerializerProvider;
-import com.fasterxml.jackson.databind.Module;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -13,9 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author 佟盟
@@ -47,22 +42,6 @@ public class RedisAutoConfiguration implements CacheAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(SecondCacheSerializerProvider.class)
     public SecondCacheSerializerProvider secondCacheSerializerProvider(ObjectProvider<Jackson2ModuleProvider> jackson2ModuleProviders) {
-        List<Module> list = jackson2ModuleProviders.orderedStream().flatMap(a -> {
-            if (a.module() != null) {
-                a.modules().add(a.module());
-            }
-            return a.modules().stream();
-        }).collect(Collectors.toList());
-        return new GenericRedisSerializer(list);
-    }
-
-    @Bean
-    Jackson2ModuleProvider customJackson2ModuleProvider() {
-        return new Jackson2ModuleProvider() {
-            @Override
-            public Module module() {
-                return new CustomJackson2Module();
-            }
-        };
+        return new GenericFstRedisSerializer();
     }
 }
