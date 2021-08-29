@@ -1,10 +1,10 @@
 package cloud.agileframework.cache.support.redis;
 
 import cloud.agileframework.cache.support.AbstractAgileCache;
+import cloud.agileframework.cache.util.BeanUtil;
 import cloud.agileframework.common.util.clazz.ClassUtil;
 import cloud.agileframework.common.util.clazz.TypeReference;
 import cloud.agileframework.common.util.object.ObjectUtil;
-import cloud.agileframework.spring.util.BeanUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.support.NullValue;

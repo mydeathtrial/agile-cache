@@ -3,9 +3,7 @@ package cloud.agileframework.cache.util;
 import cloud.agileframework.cache.support.AgileCache;
 import cloud.agileframework.cache.support.AgileCacheManagerInterface;
 import cloud.agileframework.cache.support.NoCacheManager;
-import cloud.agileframework.cache.support.ehcache.AgileEhCacheCacheManager;
 import cloud.agileframework.common.util.clazz.TypeReference;
-import cloud.agileframework.spring.util.BeanUtil;
 import lombok.SneakyThrows;
 import org.springframework.cache.Cache;
 
@@ -25,7 +23,7 @@ public class CacheUtil {
 
     @SneakyThrows
     public static AgileCacheManagerInterface getAgileCacheManager() {
-        return Optional.ofNullable(BeanUtil.getBean(AgileCacheManagerInterface.class)).orElseThrow(NoCacheManager::new);
+        return Optional.of(BeanUtil.getApplicationContext().getBean(AgileCacheManagerInterface.class)).orElseThrow(NoCacheManager::new);
     }
 
     public static AgileCache getCache() {

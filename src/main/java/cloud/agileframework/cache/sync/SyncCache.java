@@ -1,8 +1,5 @@
 package cloud.agileframework.cache.sync;
 
-import cloud.agileframework.spring.sync.Runner;
-
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**

@@ -6,7 +6,6 @@ import cloud.agileframework.cache.support.ehcache.AgileEhCacheCacheManager;
 import cloud.agileframework.cache.support.ehcache.TransmitKey;
 import cloud.agileframework.cache.support.redis.AgileRedis;
 import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
-import cloud.agileframework.spring.util.AsyncUtil;
 import lombok.SneakyThrows;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
@@ -246,7 +245,7 @@ public class RedisSyncCache implements MessageListener, SyncCache {
                             //某操作
                             result = supplier.get();
                             //异步执行
-                            AsyncUtil.execute(() -> ehcacheToRedisAndNotice(syncKeys, opType));
+                            AsyncManager.execute(() -> ehcacheToRedisAndNotice(syncKeys, opType));
                             return result;
                         } catch (OptimisticLockCheckError e) {
                             unlock(syncKeys.getWriteLock());
@@ -288,7 +287,7 @@ public class RedisSyncCache implements MessageListener, SyncCache {
                     if (writeLock(syncKeys)) {
                         try {
                             //异步执行
-                            AsyncUtil.execute(() -> ehcacheToRedisAndNotice(syncKeys, opType));
+                            AsyncManager.execute(() -> ehcacheToRedisAndNotice(syncKeys, opType));
                             return;
                         } catch (OptimisticLockCheckError e) {
                             unlock(syncKeys.getWriteLock());

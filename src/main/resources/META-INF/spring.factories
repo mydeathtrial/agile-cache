@@ -1,3 +1,5 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 cloud.agileframework.cache.config.EhCacheAutoConfiguration,\
 cloud.agileframework.cache.config.RedisAutoConfiguration
+org.springframework.boot.SpringApplicationRunListener=\
+cloud.agileframework.cache.config.SpringBootApplicationRunListener

@@ -1,6 +1,6 @@
 package cloud.agileframework.cache.support.redis;
 
-import cloud.agileframework.spring.util.BeanUtil;
+import cloud.agileframework.cache.util.BeanUtil;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.cfg.spi.DomainDataRegionBuildingContext;
@@ -91,7 +91,7 @@ public class RedisRegionFactory extends RegionFactoryTemplate {
             if (logger.isDebugEnabled()) {
                 logger.debug("完成初始化Redis二级缓存区域");
             }
-            this.redisCacheManager = BeanUtil.getBean(AgileRedisCacheManager.class).getCacheManager();
+            this.redisCacheManager = BeanUtil.getApplicationContext().getBean(AgileRedisCacheManager.class).getCacheManager();
             REFERENCE_COUNT.incrementAndGet();
             return redisCacheManager;
         } catch (Exception e) {

@@ -4,9 +4,9 @@ import cloud.agileframework.cache.support.AbstractAgileCache;
 import cloud.agileframework.cache.sync.OpType;
 import cloud.agileframework.cache.sync.SyncCache;
 import cloud.agileframework.cache.sync.SyncKeys;
+import cloud.agileframework.cache.util.BeanUtil;
 import cloud.agileframework.common.util.clazz.TypeReference;
 import cloud.agileframework.common.util.object.ObjectUtil;
-import cloud.agileframework.spring.util.BeanUtil;
 import com.google.common.collect.Maps;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
@@ -62,7 +62,7 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     private SyncCache syncCache() {
-        return BeanUtil.getBean(SyncCache.class);
+        return BeanUtil.getApplicationContext().getBean(SyncCache.class);
     }
 
     @Override

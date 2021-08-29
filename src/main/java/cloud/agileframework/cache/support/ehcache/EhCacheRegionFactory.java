@@ -1,6 +1,6 @@
 package cloud.agileframework.cache.support.ehcache;
 
-import cloud.agileframework.spring.util.BeanUtil;
+import cloud.agileframework.cache.util.BeanUtil;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import org.hibernate.boot.spi.SessionFactoryOptions;
@@ -26,7 +26,7 @@ public class EhCacheRegionFactory extends SingletonEhcacheRegionFactory {
                 logger.info("完成初始化EhCache二级缓存区域");
             }
             REFERENCE_COUNT.incrementAndGet();
-            return BeanUtil.getBean(AgileEhCacheCacheManager.class).getCacheManager();
+            return BeanUtil.getApplicationContext().getBean(AgileEhCacheCacheManager.class).getCacheManager();
         } catch (Exception e) {
             if (logger.isErrorEnabled()) {
                 logger.error("初始化EhCache二级缓存区域失败", e);
