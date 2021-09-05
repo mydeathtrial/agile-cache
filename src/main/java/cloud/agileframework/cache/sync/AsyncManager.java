@@ -1,8 +1,5 @@
 package cloud.agileframework.cache.sync;
 
-import cloud.agileframework.cache.util.BeanUtil;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.concurrent.*;
 
 /**
@@ -22,7 +19,7 @@ public class AsyncManager {
     private AsyncManager() {
     }
 
-    private static volatile AsyncManager single;
+    private static AsyncManager single;
 
     private static AsyncManager getSingle() {
         if (single != null) {
@@ -39,30 +36,11 @@ public class AsyncManager {
     }
 
     /**
-     * 处理事务用的
-     */
-    private static final RunnerWrapper RUNNER_WRAPPER = BeanUtil.getApplicationContext().getBean(RunnerWrapper.class);
-
-    /**
      * 执行任务
      *
      * @param task 任务
      */
-    public static void execute(Runner task) {
-        getSingle().executor.execute(() -> RUNNER_WRAPPER.run(task));
-    }
-
-    public interface Runner {
-        /**
-         * 执行器
-         */
-        void run();
-    }
-
-    public static class RunnerWrapper {
-        @Transactional(rollbackFor = Exception.class)
-        public void run(Runner runner) {
-            runner.run();
-        }
+    public static void execute(Runnable task) {
+        getSingle().executor.execute(task);
     }
 }

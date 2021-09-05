@@ -4,7 +4,6 @@ import cloud.agileframework.cache.properties.EhCacheProperties;
 import cloud.agileframework.cache.support.ehcache.AgileEhCacheCacheManager;
 import cloud.agileframework.cache.support.ehcache.SyncCacheEventListener;
 import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
-import cloud.agileframework.cache.sync.AsyncManager;
 import cloud.agileframework.cache.sync.RedisSyncCache;
 import cloud.agileframework.cache.sync.SyncCache;
 import net.sf.ehcache.CacheManager;
@@ -99,10 +98,5 @@ public class EhCacheAutoConfiguration implements CacheAutoConfiguration {
     @Bean
     public SyncCacheEventListener syncCacheEventListener() {
         return new SyncCacheEventListener();
-    }
-
-    @Bean
-    public AsyncManager.RunnerWrapper runnerWrapper() {
-        return new AsyncManager.RunnerWrapper();
     }
 }
