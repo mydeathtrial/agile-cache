@@ -224,7 +224,7 @@ public class RedisSyncCache implements MessageListener, SyncCache {
     public <T> T sync(SyncKeys syncKeys, Supplier<T> supplier, OpType opType) {
         T result = null;
         //自旋10次
-        int count = 1200;
+        int count = 100;
 
         while (count > 0) {
 
@@ -238,24 +238,24 @@ public class RedisSyncCache implements MessageListener, SyncCache {
                         return supplier.get();
                     }
                     break;
-                case WRITE:
-                case DELETE:
-                    if (writeLock(syncKeys)) {
-                        try {
-                            //某操作
-                            result = supplier.get();
-                            //异步执行
-                            AsyncManager.execute(() -> ehcacheToRedisAndNotice(syncKeys, opType));
-                            return result;
-                        } catch (OptimisticLockCheckError e) {
-                            unlock(syncKeys.getWriteLock());
-                            throw e;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            unlock(syncKeys.getWriteLock());
-                        }
-                    }
-                    break;
+//                case WRITE:
+//                case DELETE:
+//                    if (writeLock(syncKeys)) {
+//                        try {
+//                            //某操作
+//                            result = supplier.get();
+//                            //异步执行
+//                            AsyncManager.execute(() -> ehcacheToRedisAndNotice(syncKeys, opType));
+//                            return result;
+//                        } catch (OptimisticLockCheckError e) {
+//                            unlock(syncKeys.getWriteLock());
+//                            throw e;
+//                        } catch (Exception e) {
+//                            e.printStackTrace();
+//                            unlock(syncKeys.getWriteLock());
+//                        }
+//                    }
+//                    break;
                 default:
             }
 
@@ -277,7 +277,7 @@ public class RedisSyncCache implements MessageListener, SyncCache {
             return;
         }
         //自旋10次
-        int count = 1200;
+        int count = 100;
 
         while (count > 0) {
 

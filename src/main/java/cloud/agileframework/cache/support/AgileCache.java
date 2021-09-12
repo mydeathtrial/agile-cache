@@ -16,32 +16,6 @@ import java.util.List;
 public interface AgileCache extends Cache {
 
     /**
-     * 获取缓存区域名
-     *
-     * @return 例如:common-cache
-     */
-    @Override
-    String getName();
-
-    /**
-     * 直接获取缓存客户端
-     *
-     * @return 例如:RedisConnection/Ehcache
-     */
-    @Override
-    Object getNativeCache();
-
-    /**
-     * 如果不存在就存，存在就不存
-     *
-     * @param key   索引
-     * @param value 值
-     * @return 包装值
-     */
-    @Override
-    ValueWrapper putIfAbsent(Object key, Object value);
-
-    /**
      * 过期存储
      *
      * @param key     索引
@@ -49,26 +23,6 @@ public interface AgileCache extends Cache {
      * @param timeout 过期时间
      */
     void put(Object key, Object value, Duration timeout);
-
-    /**
-     * 存储
-     *
-     * @param key   索引
-     * @param value 值
-     */
-    @Override
-    void put(Object key, Object value);
-
-    /**
-     * 获取
-     *
-     * @param key   索引
-     * @param clazz 类型
-     * @param <T>   泛型
-     * @return 值
-     */
-    @Override
-    <T> T get(Object key, Class<T> clazz);
 
     /**
      * 获取
@@ -79,20 +33,6 @@ public interface AgileCache extends Cache {
      * @return 值
      */
     <T> T get(Object key, TypeReference<T> typeReference);
-
-    /**
-     * 删除
-     *
-     * @param key 索引
-     */
-    @Override
-    void evict(Object key);
-
-    /**
-     * 清理
-     */
-    @Override
-    void clear();
 
     /**
      * 判断
