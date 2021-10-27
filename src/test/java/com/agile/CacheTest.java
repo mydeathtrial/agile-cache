@@ -3,6 +3,7 @@ package com.agile;
 import cloud.agileframework.cache.support.redis.AgileRedisCacheManager;
 import cloud.agileframework.cache.sync.SyncKeys;
 import cloud.agileframework.cache.util.CacheUtil;
+import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,6 +43,7 @@ public class CacheTest implements Serializable {
     @Autowired(required = false)
     private AgileRedisCacheManager redisCacheManager;
 
+    @SneakyThrows
     @Test
     public void cover() {
         String key = "test1";
