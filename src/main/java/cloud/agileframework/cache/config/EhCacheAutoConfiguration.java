@@ -96,6 +96,7 @@ public class EhCacheAutoConfiguration implements CacheAutoConfiguration {
      * @return 事件监听
      */
     @Bean
+    @ConditionalOnBean(SyncCache.class)
     public SyncCacheEventListener syncCacheEventListener() {
         return new SyncCacheEventListener();
     }

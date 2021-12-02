@@ -1,14 +1,13 @@
 package cloud.agileframework.cache.support.ehcache;
 
 import cloud.agileframework.cache.sync.OpType;
-import cloud.agileframework.cache.sync.RedisSyncCache;
 import cloud.agileframework.cache.sync.SyncCache;
 import cloud.agileframework.cache.sync.SyncKeys;
+import cloud.agileframework.cache.util.BeanUtil;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListenerAdapter;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.util.List;
@@ -23,9 +22,9 @@ import java.util.List;
 public class SyncCacheEventListener extends CacheEventListenerAdapter {
     private SyncCache syncCache;
 
-    @Autowired
-    public void setSyncCache(SyncCache syncCache) {
-        this.syncCache = syncCache;
+    public SyncCache getSyncCache() {
+        if (syncCache == null) syncCache = BeanUtil.getApplicationContext().getBean(SyncCache.class);
+        return syncCache;
     }
 
     private boolean needSync(Element element) {
@@ -42,7 +41,7 @@ public class SyncCacheEventListener extends CacheEventListenerAdapter {
         if (needSync(element)) {
             return;
         }
-        syncCache.sync(getSyncKeys(cache, element), OpType.DELETE);
+        getSyncCache().sync(getSyncKeys(cache, element), OpType.DELETE);
     }
 
     @Override
@@ -50,7 +49,7 @@ public class SyncCacheEventListener extends CacheEventListenerAdapter {
         if (needSync(element)) {
             return;
         }
-        syncCache.sync(getSyncKeys(cache, element), OpType.WRITE);
+        getSyncCache().sync(getSyncKeys(cache, element), OpType.WRITE);
     }
 
     @Override
@@ -58,7 +57,7 @@ public class SyncCacheEventListener extends CacheEventListenerAdapter {
         if (needSync(element)) {
             return;
         }
-        syncCache.sync(getSyncKeys(cache, element), OpType.WRITE);
+        getSyncCache().sync(getSyncKeys(cache, element), OpType.WRITE);
     }
 
     @Override
@@ -66,7 +65,7 @@ public class SyncCacheEventListener extends CacheEventListenerAdapter {
         if (needSync(element)) {
             return;
         }
-        syncCache.sync(getSyncKeys(cache, element), OpType.DELETE);
+        getSyncCache().sync(getSyncKeys(cache, element), OpType.DELETE);
     }
 
     @Override
@@ -76,7 +75,7 @@ public class SyncCacheEventListener extends CacheEventListenerAdapter {
             if (keyNeedSync(key)) {
                 return;
             }
-            syncCache.sync(SyncKeys.of(cache.getName(), key), OpType.DELETE);
+            getSyncCache().sync(SyncKeys.of(cache.getName(), key), OpType.DELETE);
         }
     }
 
