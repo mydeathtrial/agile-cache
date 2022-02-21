@@ -45,18 +45,14 @@ import java.util.stream.Collectors;
  * @since 1.0
  */
 public class AgileRedis extends AbstractAgileCache {
-    private final Logger logger = LoggerFactory.getLogger(AgileRedis.class);
-
     private static final byte[] BINARY_NULL_VALUE = RedisSerializer.java().serialize(NullValue.INSTANCE);
-
+    private static final Duration SLEEP_TIME = Duration.ZERO;
+    private static final String TAG = UUID.randomUUID().toString();
+    private final Logger logger = LoggerFactory.getLogger(AgileRedis.class);
     private final RedisConnectionFactory redisConnectionFactory;
     private final RedisCacheConfiguration cacheConfig;
     private final ConversionService conversionService;
     private final String name;
-
-    private static final Duration SLEEP_TIME = Duration.ZERO;
-
-    private static final String TAG = UUID.randomUUID().toString();
     /**
      * 存储数据的序列化工具
      */
@@ -68,6 +64,23 @@ public class AgileRedis extends AbstractAgileCache {
         this.redisConnectionFactory = redisConnectionFactory;
         this.cacheConfig = cache.getCacheConfiguration();
         this.conversionService = cacheConfig.getConversionService();
+    }
+
+    /**
+     * 取当前进程信息
+     *
+     * @return 当前进程+线程信息
+     */
+    private static String getCurrentProcessAndThreadInfo() {
+        return TAG + Thread.currentThread().toString();
+    }
+
+    private static byte[] toBytes(String name) {
+        return name.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static String createCacheLockKey(Object name) {
+        return name.toString() + "~lock";
     }
 
     @Override
@@ -149,6 +162,12 @@ public class AgileRedis extends AbstractAgileCache {
         executeConsumer(name, connection -> connection.sRem(createAndConvertCacheKey(setKey), serializeCacheValue(node)));
     }
 
+    @Override
+    public boolean connectKey(Object setKey, Object node) {
+        logger.info("操作:判断\n区域：{}\nSet：{}\nvalue值:{}是否存在\n", cache.getName(), setKey, node);
+        return execute(name, connection -> connection.sIsMember(createAndConvertCacheKey(setKey), serializeCacheValue(node)));
+    }
+
     public synchronized boolean lock(Object lock, Object value) {
         return execute(name, connection -> connection.setNX(createAndConvertCacheKey(createCacheLockKey(lock)),
                 serializeCacheValue(value)));
@@ -197,15 +216,6 @@ public class AgileRedis extends AbstractAgileCache {
         }
     }
 
-    /**
-     * 取当前进程信息
-     *
-     * @return 当前进程+线程信息
-     */
-    private static String getCurrentProcessAndThreadInfo() {
-        return TAG + Thread.currentThread().toString();
-    }
-
     @Override
     public synchronized boolean lock(Object lock) {
         return lock(lock, new byte[0]);
@@ -224,11 +234,7 @@ public class AgileRedis extends AbstractAgileCache {
      */
     public synchronized boolean containLock(Object lock) {
         String value = getLock(lock, String.class);
-        if (getCurrentProcessAndThreadInfo().equals(value) || value == null) {
-            return false;
-        } else {
-            return true;
-        }
+        return !getCurrentProcessAndThreadInfo().equals(value) && value != null;
     }
 
     @Override
@@ -261,7 +267,6 @@ public class AgileRedis extends AbstractAgileCache {
         // allow contextual cache names by computing the key prefix on every call.
         return cacheConfig.getKeyPrefixFor(name) + key;
     }
-
 
     private String convertKey(Object key) {
 
@@ -313,24 +318,18 @@ public class AgileRedis extends AbstractAgileCache {
 
     private <T> T execute(String name, Function<RedisConnection, T> callback) {
 
-        RedisConnection connection = redisConnectionFactory.getConnection();
-        try {
+        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
             checkAndPotentiallyWaitUntilUnlocked(name, connection);
             return callback.apply(connection);
-        } finally {
-            connection.close();
         }
     }
 
     private void executeConsumer(String name, Consumer<RedisConnection> callback) {
 
-        RedisConnection connection = redisConnectionFactory.getConnection();
-        try {
+        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
 
             checkAndPotentiallyWaitUntilUnlocked(name, connection);
             callback.accept(connection);
-        } finally {
-            connection.close();
         }
     }
 
@@ -360,15 +359,7 @@ public class AgileRedis extends AbstractAgileCache {
     }
 
     private boolean doCheckLock(Object name, RedisConnection connection) {
-        return connection.exists(createAndConvertCacheKey(createCacheLockKey(name)));
-    }
-
-    private static byte[] toBytes(String name) {
-        return name.getBytes(StandardCharsets.UTF_8);
-    }
-
-    private static String createCacheLockKey(Object name) {
-        return name.toString() + "~lock";
+        return Boolean.TRUE.equals(connection.exists(createAndConvertCacheKey(createCacheLockKey(name))));
     }
 
     public <T> T getLock(Object lock, Class<T> clazz) {
@@ -378,12 +369,8 @@ public class AgileRedis extends AbstractAgileCache {
 
     private void executeLockFree(Consumer<RedisConnection> callback) {
 
-        RedisConnection connection = redisConnectionFactory.getConnection();
-
-        try {
+        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
             callback.accept(connection);
-        } finally {
-            connection.close();
         }
     }
 
@@ -418,9 +405,7 @@ public class AgileRedis extends AbstractAgileCache {
             try {
                 executeConsumer(name, connection -> connection.hMSet(createAndConvertCacheKey(key), map));
             } catch (RedisSystemException e) {
-                map.forEach((eKey, eValue) -> {
-                    addToMap(key, eKey, eValue);
-                });
+                map.forEach((eKey, eValue) -> addToMap(key, eKey, eValue));
             }
 
         } else if (List.class.isAssignableFrom(value.getClass())) {

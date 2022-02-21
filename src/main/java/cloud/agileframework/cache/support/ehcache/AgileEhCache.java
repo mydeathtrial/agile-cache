@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
  */
 public class AgileEhCache extends AbstractAgileCache {
 
+    private static final AntPathMatcher ANT = new AntPathMatcher();
     private final Ehcache nativeCache;
 
     AgileEhCache(EhCacheCache cache) {
@@ -208,6 +209,12 @@ public class AgileEhCache extends AbstractAgileCache {
     }
 
     @Override
+    public boolean connectKey(Object setKey, Object node) {
+        Set<Object> set = directGetSet(setKey);
+        return set.contains(node);
+    }
+
+    @Override
     public synchronized boolean lock(Object lock) {
         boolean isLock;
         try {
@@ -224,8 +231,6 @@ public class AgileEhCache extends AbstractAgileCache {
     public void unlock(Object lock) {
         nativeCache.releaseWriteLockOnKey(TransmitKey.of(lock));
     }
-
-    private static final AntPathMatcher ANT = new AntPathMatcher();
 
     @Override
     public List<String> keys(Object key) {

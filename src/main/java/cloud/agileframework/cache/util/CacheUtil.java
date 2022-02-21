@@ -254,6 +254,16 @@ public class CacheUtil {
     }
 
     /**
+     * set中判断是否已经存在节点
+     *
+     * @param setKey set索引
+     * @param node   节点数据
+     */
+    public static boolean connectKeyFromSet(Object setKey, Object node) {
+        return getCache(DEFAULT_CACHE_NAME).connectKey(setKey, node);
+    }
+
+    /**
      * 分布式同步锁
      *
      * @param lock 锁标识

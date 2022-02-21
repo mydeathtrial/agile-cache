@@ -130,6 +130,15 @@ public interface AgileCache extends Cache {
     void removeFromSet(Object setKey, Object node);
 
     /**
+     * 判断某个元素是否已经存在
+     *
+     * @param setKey set索引
+     * @param node   节点数据
+     * @return true已存在
+     */
+    boolean connectKey(Object setKey, Object node);
+
+    /**
      * 分布式同步锁
      *
      * @param lock 锁标识
