@@ -1,7 +1,5 @@
 package cloud.agileframework.cache.support.ehcache;
 
-import lombok.Data;
-
 import java.util.Objects;
 
 /**
@@ -11,7 +9,6 @@ import java.util.Objects;
  * @version 1.0
  * @since 1.0
  */
-@Data
 public class TransmitKey {
     /**
      * 真实的key
@@ -22,6 +19,10 @@ public class TransmitKey {
      */
     private boolean transmit = true;
 
+    public TransmitKey(Object key) {
+        this.key = key.toString();
+    }
+
     public static TransmitKey of(Object key) {
         return new TransmitKey(key);
     }
@@ -30,6 +31,18 @@ public class TransmitKey {
         TransmitKey result = of(key);
         result.setTransmit(transmit);
         return result;
+    }
+
+    public Object getKey() {
+        return key;
+    }
+
+    public boolean isTransmit() {
+        return transmit;
+    }
+
+    public void setTransmit(boolean transmit) {
+        this.transmit = transmit;
     }
 
     @Override
@@ -46,7 +59,7 @@ public class TransmitKey {
 
     @Override
     public int hashCode() {
-        if(getKey() instanceof String){
+        if (getKey() instanceof String) {
             return getKey().hashCode();
         }
         return Objects.hash(getKey());
