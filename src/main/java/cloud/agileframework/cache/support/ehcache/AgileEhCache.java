@@ -7,7 +7,9 @@ import cloud.agileframework.cache.sync.SyncKeys;
 import cloud.agileframework.cache.util.BeanUtil;
 import cloud.agileframework.common.util.clazz.TypeReference;
 import cloud.agileframework.common.util.object.ObjectUtil;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import org.apache.commons.lang3.RandomUtils;
@@ -18,7 +20,6 @@ import org.springframework.util.NumberUtils;
 
 import java.io.Serializable;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -307,7 +308,7 @@ public class AgileEhCache extends AbstractAgileCache {
     private List<Object> directGetList(Object listKey) {
         List<Object> list = get(listKey, List.class);
         if (list == null) {
-            return Collections.emptyList();
+            return Lists.newArrayList();
         }
         return list;
     }
@@ -315,7 +316,7 @@ public class AgileEhCache extends AbstractAgileCache {
     private Set<Object> directGetSet(Object setKey) {
         Set<Object> set = get(setKey, Set.class);
         if (set == null) {
-            return Collections.emptySet();
+            return Sets.newHashSet();
         }
         return set;
     }
