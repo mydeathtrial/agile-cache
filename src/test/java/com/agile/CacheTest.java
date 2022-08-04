@@ -159,11 +159,12 @@ public class CacheTest implements Serializable {
     }
 
     @Before
-    public void before(){
+    public void before() {
         CacheUtil.clear();
     }
 
     AtomicInteger lockCount = new AtomicInteger(0);
+
     /**
      * 测试多线程
      */
@@ -190,7 +191,7 @@ public class CacheTest implements Serializable {
                 e.printStackTrace();
             }
         });
-        if(redisCacheManager!=null){
+        if (redisCacheManager != null) {
             String region = CacheUtil.getCache().getName();
             SyncKeys syncKeys = SyncKeys.of(region, lockKey);
             Integer redisVersion = redisCacheManager.getCache(region).get(syncKeys.getVersion(), int.class);
@@ -214,7 +215,6 @@ public class CacheTest implements Serializable {
 
     /**
      * 测试引用
-     *
      */
     @Test
     public void testQuote() {

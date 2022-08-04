@@ -1,6 +1,8 @@
 package cloud.agileframework.cache.sync;
 
-import java.util.concurrent.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 异步任务管理器
@@ -11,7 +13,7 @@ public class AsyncManager {
     /**
      * 异步操作任务调度线程池
      */
-    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,Integer.MAX_VALUE,3,TimeUnit.MINUTES, new LinkedBlockingQueue<>());
+    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2, Integer.MAX_VALUE, 3, TimeUnit.MINUTES, new LinkedBlockingQueue<>());
 
     /**
      * 单例模式

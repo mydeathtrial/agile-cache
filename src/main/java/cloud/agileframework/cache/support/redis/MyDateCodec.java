@@ -14,6 +14,7 @@ import java.lang.reflect.Type;
  */
 public class MyDateCodec extends DateCodec {
     public static final MyDateCodec instance = new MyDateCodec();
+
     @Override
     public <T> T cast(DefaultJSONParser parser, Type clazz, Object fieldName, Object val) {
         if (val == null) {

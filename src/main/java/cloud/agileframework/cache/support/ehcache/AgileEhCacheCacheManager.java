@@ -1,14 +1,12 @@
 package cloud.agileframework.cache.support.ehcache;
 
 import cloud.agileframework.cache.support.AbstractAgileCacheManager;
-import cloud.agileframework.cache.sync.RedisSyncCache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.event.CacheEventListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.ehcache.EhCacheCache;
-import org.springframework.context.annotation.Primary;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

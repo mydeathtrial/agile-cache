@@ -13,10 +13,11 @@ public interface SyncCache {
 
     /**
      * 二级缓存同步执行
+     *
      * @param syncKeys 相关的缓存key信息
      * @param supplier 执行方法
-     * @param opType 执行类型
-     * @param <T> 返回的数据类型
+     * @param opType   执行类型
+     * @param <T>      返回的数据类型
      * @return 执行方法返回值
      */
     default <T> T sync(SyncKeys syncKeys, Supplier<T> supplier, OpType opType) {
